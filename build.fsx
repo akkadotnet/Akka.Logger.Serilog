@@ -126,11 +126,6 @@ let updateNugetPackages _ =
     | true -> "src/.nuget/NuGet.Dev.Config" 
     | false -> "src/.nuget/NuGet.Config" 
 
-  let getPackages project =
-    match project with
-    | "Akka.Logger.Serilog" -> ["Akka"]
-    | _ -> []
-
   for projectFile in !! "src/**/*.csproj" do
     printfn "Updating packages for %s" projectFile
     let project = Path.GetFileNameWithoutExtension projectFile
@@ -141,10 +136,10 @@ let updateNugetPackages _ =
         (fun p ->
                 { p with
                     ConfigFile = Some (getConfigFile isPreRelease)
-                    Prerelease = true
+                    Prerelease = isPreRelease
                     ToolPath = nugetExe
                     RepositoryPath = "src/Packages"
-                    Ids = getPackages project
+                    Ids = ["Akka";"Serilog"]
                     }) config
 
 Target "UpdateDependencies" <| fun _ ->
