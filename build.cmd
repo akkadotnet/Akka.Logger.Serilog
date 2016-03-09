@@ -26,8 +26,6 @@ src\.nuget\NuGet.exe update -self
 
 src\.nuget\NuGet.exe install FAKE -ConfigFile src\.nuget\Nuget.Config -OutputDirectory src\packages -ExcludeVersion -Version 4.16.1
 
-src\.nuget\NuGet.exe install NUnit.Console -ConfigFile src\.nuget\Nuget.Config -OutputDirectory src\packages\FAKE -ExcludeVersion -Version 3.0.0
-
 if not exist src\packages\SourceLink.Fake\tools\SourceLink.fsx (
   src\.nuget\nuget.exe install SourceLink.Fake -ConfigFile src\.nuget\Nuget.Config -OutputDirectory src\packages -ExcludeVersion
 )
