@@ -220,8 +220,6 @@ let createNugetPackages _ =
         // Uses the files we copied to workingDir and outputs to nugetdir
         pack nugetDir NugetSymbolPackage.Nuspec
         
-    removeDir libDir
-    removeDir workingDir
 
 let publishNugetPackages _ = 
     let rec publishPackage url accessKey trialsLeft packageFile =
