@@ -162,12 +162,17 @@ let createNugetPackages _ =
             DeleteDir dir
             not (directoryExists dir)
         runWithRetries del 3 |> ignore
-
+    
+    let cleanupDir dir =
+        let cdr _ =
+            CleanDir dir
+        runWithRetries cdr 3 |> ignore
+     
     ensureDirectory nugetDir
     for nuspec in !! "src/**/*.nuspec" do
         printfn "Creating nuget packages for %s" nuspec
         
-        CleanDir workingDir
+        cleanupDir workingDir
 
         let project = Path.GetFileNameWithoutExtension nuspec 
         let projectDir = Path.GetDirectoryName nuspec
