@@ -215,7 +215,7 @@ let createNugetPackages _ =
         //Remove workingDir/src/obj and workingDir/src/bin
         removeDir (nugetSrcDir @@ "obj")
         removeDir (nugetSrcDir @@ "bin")
-
+        removeDir libDir
         // Create both normal nuget package and symbols nuget package. 
         // Uses the files we copied to workingDir and outputs to nugetdir
         pack nugetDir NugetSymbolPackage.Nuspec
