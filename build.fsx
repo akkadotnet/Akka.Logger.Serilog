@@ -19,7 +19,7 @@ cd __SOURCE_DIRECTORY__
 
 let product = "Akka.NET"
 let authors = [ "Akka.NET Team" ]
-let copyright = "Copyright © 2013-2016 Akka.NET Team"
+let copyright = "Copyright Â© 2013-2016 Akka.NET Team"
 let company = "Akka.NET Team"
 let description = "Akka.NET is a port of the popular Java/Scala framework Akka to .NET"
 let tags = ["akka";"actors";"actor";"model";"Akka";"concurrency"]
@@ -162,12 +162,17 @@ let createNugetPackages _ =
             DeleteDir dir
             not (directoryExists dir)
         runWithRetries del 3 |> ignore
-
+    
+    let cleanupDir dir =
+        let cdr _ =
+            CleanDir dir
+        runWithRetries cdr 3 |> ignore
+     
     ensureDirectory nugetDir
     for nuspec in !! "src/**/*.nuspec" do
         printfn "Creating nuget packages for %s" nuspec
         
-        CleanDir workingDir
+        cleanupDir workingDir
 
         let project = Path.GetFileNameWithoutExtension nuspec 
         let projectDir = Path.GetDirectoryName nuspec
@@ -215,12 +220,11 @@ let createNugetPackages _ =
         //Remove workingDir/src/obj and workingDir/src/bin
         removeDir (nugetSrcDir @@ "obj")
         removeDir (nugetSrcDir @@ "bin")
-
+        
         // Create both normal nuget package and symbols nuget package. 
         // Uses the files we copied to workingDir and outputs to nugetdir
         pack nugetDir NugetSymbolPackage.Nuspec
         
-        removeDir workingDir
 
 let publishNugetPackages _ = 
     let rec publishPackage url accessKey trialsLeft packageFile =
@@ -346,10 +350,9 @@ Target "HelpNuget" <| fun _ ->
 
 // nuget dependencies
 "CleanNuget" ==> "CreateNuget"
-"CleanNuget" ==> "BuildRelease" ==> "Nuget"
+"CreateNuget" ==> "BuildRelease"
 
 Target "All" DoNothing
 "BuildRelease" ==> "All"
-"Nuget" ==> "All"
 
 RunTargetOrDefault "Help"
