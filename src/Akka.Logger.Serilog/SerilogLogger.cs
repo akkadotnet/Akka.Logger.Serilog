@@ -9,6 +9,8 @@ using System;
 using Akka.Actor;
 using Akka.Event;
 using Serilog;
+using Akka.Dispatch;
+using Akka.Event;
 
 namespace Akka.Logger.Serilog
 {
@@ -18,7 +20,7 @@ namespace Akka.Logger.Serilog
     /// recognized: <see cref="Debug"/>, <see cref="Info"/>,
     /// <see cref="Warning"/> and <see cref="Error"/>.
     /// </summary>
-    public class SerilogLogger : ReceiveActor
+    public class SerilogLogger : ReceiveActor, IRequiresMessageQueue<ILoggerMessageQueueSemantics>
     {
         private readonly ILoggingAdapter _log = Context.GetLogger();
 
