@@ -1,3 +1,8 @@
+#### 1.1.2 September 26 2016 ####
+
+Support for Akka 1.1.2
+Update to Serilog 2.2.1
+
 #### 1.1.1 Juli 16 2016 ####
 
 Support for Akka 1.1.1
