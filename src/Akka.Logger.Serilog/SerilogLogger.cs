@@ -5,11 +5,12 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using System;
+using System.Linq;
 using Akka.Actor;
+using Akka.Dispatch;
 using Akka.Event;
 using Serilog;
-using Akka.Dispatch;
+using Serilog.Core.Enrichers;
 
 namespace Akka.Logger.Serilog
 {
@@ -26,27 +27,28 @@ namespace Akka.Logger.Serilog
         private static string GetFormat(object message)
         {
             var logMessage = message as LogMessage;
-
-            return logMessage != null
-                ? logMessage.Format
-                : "{Message}";
+            return logMessage != null ? logMessage.Format : "{Message}";
         }
 
         private static object[] GetArgs(object message)
         {
             var logMessage = message as LogMessage;
-
-            return logMessage != null
-                ? logMessage.Args
-                : new[] { message };
+            return logMessage?.Args.Where(a => !(a is PropertyEnricher)).ToArray() ?? new[] { message };
         }
 
         private static ILogger GetLogger(LogEvent logEvent) {
             var logger = Log.Logger.ForContext("SourceContext", Context.Sender.Path);
             logger = logger
-                      .ForContext("Timestamp", logEvent.Timestamp)
-                      .ForContext("LogSource", logEvent.LogSource)
-                      .ForContext("Thread", logEvent.Thread.ManagedThreadId.ToString().PadLeft(4, '0'));
+                .ForContext("Timestamp", logEvent.Timestamp)
+                .ForContext("LogSource", logEvent.LogSource)
+                .ForContext("Thread", logEvent.Thread.ManagedThreadId.ToString().PadLeft(4, '0'));
+
+            var logMessage = logEvent.Message as LogMessage;
+            if (logMessage != null)
+            {
+                logger = logMessage.Args.OfType<PropertyEnricher>().Aggregate(logger, (current, enricher) => current.ForContext(enricher));
+            }
+
             return logger;
         }
 
