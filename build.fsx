@@ -351,7 +351,7 @@ Target "HelpNuget" <| fun _ ->
 
 // nuget dependencies
 "CleanNuget" ==> "CreateNuget"
-"CleanNuget" ==> "BuildRelease" ==> "Nuget"
+"CreateNuget" ==> "BuildRelease" ==> "Nuget"
 
 Target "All" DoNothing
 "BuildRelease" ==> "All"
