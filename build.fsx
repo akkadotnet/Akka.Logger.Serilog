@@ -18,6 +18,13 @@ let outputTests = output @@ "tests"
 let outputBinaries = output @@ "binaries"
 let outputNuGet = output @@ "nuget"
 
+let buildNumber = environVarOrDefault "BUILD_NUMBER" "0"
+let preReleaseVersionSuffix = "beta" + (if (not (buildNumber = "0")) then (buildNumber) else "")
+let versionSuffix = 
+    match (getBuildParam "nugetprerelease") with
+    | "dev" -> preReleaseVersionSuffix
+    | _ -> ""
+
 Target "Clean" (fun _ ->
     CleanDir output
     CleanDir outputTests
@@ -50,23 +57,14 @@ Target "Build" (fun _ ->
 //--------------------------------------------------------------------------------
 
 Target "CreateNuget" (fun _ ->
-    let envBuildNumber = environVarOrDefault "APPVEYOR_BUILD_NUMBER" "0"
-    let branch =  environVarOrDefault "APPVEYOR_REPO_BRANCH" ""
-    let versionSuffix = if branch.Equals("dev") then (sprintf "beta-%s" envBuildNumber) else ""
-
-    let projects = !! "./**/Akka.Logger.Serilog.csproj"
-
-    let runSingleProject project =
-        DotNetCli.Pack
-            (fun p -> 
-                { p with
-                    Project = project
-                    Configuration = configuration
-                    AdditionalArgs = ["--include-symbols"]
-                    VersionSuffix = versionSuffix
-                    OutputPath = outputNuGet })
-
-    projects |> Seq.iter (runSingleProject)
+    DotNetCli.Pack
+        (fun p -> 
+            { p with
+                Project = "./**/Akka.Logger.Serilog.csproj"
+                Configuration = configuration
+                AdditionalArgs = ["--include-symbols"]
+                VersionSuffix = versionSuffix
+                OutputPath = outputNuGet })
 )
 
 //--------------------------------------------------------------------------------
