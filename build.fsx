@@ -13,7 +13,7 @@ open Fake.DocFxHelper
 let configuration = "Release"
 
 // Directories
-let output = __SOURCE_DIRECTORY__  @@ "build"
+let output = __SOURCE_DIRECTORY__  @@ "bin"
 let outputTests = output @@ "tests"
 let outputBinaries = output @@ "binaries"
 let outputNuGet = output @@ "nuget"
@@ -60,12 +60,40 @@ Target "CreateNuget" (fun _ ->
     DotNetCli.Pack
         (fun p -> 
             { p with
-                Project = "./**/Akka.Logger.Serilog.csproj"
+                Project = "./src/Akka.Logger.Serilog/Akka.Logger.Serilog.csproj"
                 Configuration = configuration
                 AdditionalArgs = ["--include-symbols"]
                 VersionSuffix = versionSuffix
                 OutputPath = outputNuGet })
 )
+
+Target "PublishNuget" (fun _ ->
+    let projects = !! "./bin/nuget/*.nupkg" -- "./bin/nuget/*.symbols.nupkg"
+    let apiKey = getBuildParamOrDefault "nugetkey" ""
+    let source = getBuildParamOrDefault "nugetpublishurl" ""
+    let symbolSource = getBuildParamOrDefault "symbolspublishurl" ""
+    let shouldPublishSymbolsPackages = not (symbolSource = "")
+
+    if (not (source = "") && not (apiKey = "") && shouldPublishSymbolsPackages) then
+        let runSingleProject project =
+            DotNetCli.RunCommand
+                (fun p -> 
+                    { p with 
+                        TimeOut = TimeSpan.FromMinutes 10. })
+                (sprintf "nuget push %s --api-key %s --source %s --symbol-source %s" project apiKey source symbolSource)
+
+        projects |> Seq.iter (runSingleProject)
+    else if (not (source = "") && not (apiKey = "") && not shouldPublishSymbolsPackages) then
+        let runSingleProject project =
+            DotNetCli.RunCommand
+                (fun p -> 
+                    { p with 
+                        TimeOut = TimeSpan.FromMinutes 10. })
+                (sprintf "nuget push %s --api-key %s --source %s" project apiKey source)
+
+        projects |> Seq.iter (runSingleProject)
+)
+
 
 //--------------------------------------------------------------------------------
 //  Target dependencies
@@ -80,6 +108,7 @@ Target "Nuget" DoNothing
 
 // nuget dependencies
 "Clean" ==> "RestorePackages" ==> "Build" ==> "CreateNuget"
+"CreateNuget" ==> "PublishNuget" ==> "Nuget"
 
 // all
 "BuildRelease" ==> "All"
