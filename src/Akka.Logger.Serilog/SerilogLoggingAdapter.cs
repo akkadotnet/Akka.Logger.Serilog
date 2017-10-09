@@ -9,12 +9,27 @@ namespace Akka.Logger.Serilog
 {
     public class SerilogLoggingAdapter : ILoggingAdapter
     {
+        /// <summary>
+        /// Helper class that allows context trees.
+        /// </summary>
+        private class ContextNode
+        {
+            public ContextNode Next { get; set; }
+            public ILogEventEnricher Enricher { get; set; }
+        }
+
         private readonly ILoggingAdapter adapter;
-        private readonly IDictionary<string, ILogEventEnricher> enrichers = new Dictionary<string, ILogEventEnricher>();
+        private readonly ContextNode enricherNode;
 
         public SerilogLoggingAdapter(ILoggingAdapter adapter)
+            : this(adapter, null)
+        {
+        }
+
+        private SerilogLoggingAdapter(ILoggingAdapter adapter, ContextNode enricherNode)
         {
             this.adapter = adapter;
+            this.enricherNode = enricherNode;
         }
 
         /// <summary>
@@ -117,14 +132,29 @@ namespace Akka.Logger.Serilog
 
         public ILoggingAdapter SetContextProperty(string name, object value, bool destructureObjects = false)
         {
-            enrichers.Add(name, new PropertyEnricher(name, value, destructureObjects));
-            return this;
+            var contextProperty = new PropertyEnricher(name, value, destructureObjects);
+
+            var contextNode = new ContextNode
+            {
+                Enricher = contextProperty,
+                Next = enricherNode
+            };
+
+            return new SerilogLoggingAdapter(adapter, contextNode);
         }
 
         private object[] BuildArgs(IEnumerable<object> args)
         {
             var newArgs = args.ToList();
-            newArgs.AddRange(enrichers.Select(enricher => enricher.Value));
+            if (enricherNode != null)
+            {
+                var currentNode = enricherNode;
+                while (currentNode != null)
+                {
+                    newArgs.Add(currentNode.Enricher);
+                    currentNode = currentNode.Next;
+                }
+            }
             return newArgs.ToArray();
         }
     }
