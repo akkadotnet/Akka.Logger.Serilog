@@ -1,16 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Logger.Serilog", "Akka.Logger.Serilog\Akka.Logger.Serilog.csproj", "{53D9D2F0-4A35-4FCE-980C-8F7F3DCBDB2B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Logger.Serilog", "Akka.Logger.Serilog\Akka.Logger.Serilog.csproj", "{53D9D2F0-4A35-4FCE-980C-8F7F3DCBDB2B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BA416AC7-E51E-48C2-B74F-FAC3506A811C}"
 	ProjectSection(SolutionItems) = preProject
 		..\build.fsx = ..\build.fsx
 		..\README.md = ..\README.md
 		..\RELEASE_NOTES.md = ..\RELEASE_NOTES.md
-		SharedAssemblyInfo.cs = SharedAssemblyInfo.cs
 	EndProjectSection
 EndProject
 Global
@@ -26,5 +25,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9CD3DD63-AFFE-499F-B7EA-29D7A39F4243}
 	EndGlobalSection
 EndGlobal
