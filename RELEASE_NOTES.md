@@ -1,4 +1,4 @@
-#### 1.3.0 January 27 2018 ####
+#### 1.3.3 January 27 2018 ####
 
 Removed SerilogLogMessageFormatter since its no longer needed
 Support for Akka 1.3.3
