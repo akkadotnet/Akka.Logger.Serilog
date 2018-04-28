@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <PackageTags>akka;actors;actor model;Akka;concurrency;serilog</PackageTags>
+    <Copyright>Copyright © 2013-2018 Akka.NET Team</Copyright>
+    <Authors>Akka.NET Team</Authors>
+    <PackageReleaseNotes>Removed SerilogLogMessageFormatter since its no longer needed
+Support for Akka 1.3.3
+Update to Serilog 2.6.0</PackageReleaseNotes>
+    <VersionPrefix>1.3.3</VersionPrefix>
+    <PackageIconUrl>http://getakka.net/images/akkalogo.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/akkadotnet/Akka.Logger.Serilog</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/akkadotnet/Akka.Logger.Serilog/blob/master/LICENSE</PackageLicenseUrl>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <XunitVersion>2.3.1</XunitVersion>
+    <TestSdkVersion>15.3.0</TestSdkVersion>
+  </PropertyGroup>
+</Project>
