@@ -1,4 +1,5 @@
 using System;
+using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
 using FluentAssertions;
@@ -22,12 +23,16 @@ namespace Akka.Logger.Serilog.Tests
                 .MinimumLevel.Information()
                 .CreateLogger();
 
-            _loggingAdapter = new SerilogLoggingAdapter(Sys.Log);
+            var logSource = Sys.Name;
+            var logClass = typeof(ActorSystem);
+
+            _loggingAdapter = new SerilogLoggingAdapter(Sys.EventStream, logSource, logClass);
         }
 
         [Theory]
         [InlineData(LogLevel.DebugLevel, "test case {0}", new object[]{ 1 })]
         [InlineData(LogLevel.DebugLevel, "test case {myNum}", new object[] { 1 })]
+        [InlineData(LogLevel.DebugLevel, "test case {myNum} {myStr}", new object[] { 1, "foo" })]
         public void ShouldHandleSerilogFormats(LogLevel level, string formatStr, object[] args)
         {
             Sys.EventStream.Subscribe(TestActor, typeof(LogEvent));

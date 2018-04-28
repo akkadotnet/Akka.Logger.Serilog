@@ -7,8 +7,12 @@ using Serilog.Core.Enrichers;
 
 namespace Akka.Logger.Serilog
 {
-    public class SerilogLoggingAdapter : ILoggingAdapter
+    public class SerilogLoggingAdapter : BusLogging
     {
+        private readonly LoggingBus _bus;
+        private readonly Type _logClass;
+        private readonly string _logSource;
+
         /// <summary>
         /// Helper class that allows context trees.
         /// </summary>
@@ -18,46 +22,19 @@ namespace Akka.Logger.Serilog
             public ILogEventEnricher Enricher { get; set; }
         }
 
-        private readonly ILoggingAdapter _adapter;
         private readonly ContextNode _enricherNode;
 
-        public SerilogLoggingAdapter(ILoggingAdapter adapter)
-            : this(adapter, null)
+
+        public SerilogLoggingAdapter(LoggingBus bus, string logSource, Type logClass) : this(bus, logSource, logClass, null)
         {
         }
 
-        private SerilogLoggingAdapter(ILoggingAdapter adapter, ContextNode enricherNode)
+        private SerilogLoggingAdapter(LoggingBus bus, string logSource, Type logClass, ContextNode enricher) : base(bus, logSource, logClass, SerilogLogMessageFormatter.Instance)
         {
-            this._adapter = adapter;
-            this._enricherNode = enricherNode;
-        }
-
-        /// <summary>
-        /// Check to determine whether the <see cref="F:Akka.Event.LogLevel.DebugLevel" /> is enabled.
-        /// </summary>
-        public bool IsDebugEnabled => _adapter.IsDebugEnabled;
-
-        /// <summary>
-        /// Check to determine whether the <see cref="F:Akka.Event.LogLevel.InfoLevel" /> is enabled.
-        /// </summary>
-        public bool IsInfoEnabled => _adapter.IsInfoEnabled;
-
-        /// <summary>
-        /// Check to determine whether the <see cref="F:Akka.Event.LogLevel.WarningLevel" /> is enabled.
-        /// </summary>
-        public bool IsWarningEnabled => _adapter.IsWarningEnabled;
-
-        /// <summary>
-        /// Check to determine whether the <see cref="F:Akka.Event.LogLevel.ErrorLevel" /> is enabled.
-        /// </summary>
-        public bool IsErrorEnabled => _adapter.IsErrorEnabled;
-
-        /// <summary>Determines whether a specific log level is enabled.</summary>
-        /// <param name="logLevel">The log level that is being checked.</param>
-        /// <returns><c>true</c> if the specified level is enabled; otherwise <c>false</c>.</returns>
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return _adapter.IsEnabled(logLevel);
+            _bus = bus;
+            _logSource = logSource;
+            _logClass = logClass;
+            _enricherNode = enricher;
         }
 
         /// <summary>
@@ -65,9 +42,9 @@ namespace Akka.Logger.Serilog
         /// </summary>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public virtual void Debug(string format, params object[] args)
+        public new void Debug(string format, params object[] args)
         {
-            _adapter.Debug(format, BuildArgs(args));
+            base.Debug(format, BuildArgs(args));
         }
 
         /// <summary>
@@ -75,9 +52,9 @@ namespace Akka.Logger.Serilog
         /// </summary>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public virtual void Info(string format, params object[] args)
+        public new void Info(string format, params object[] args)
         {
-            _adapter.Info(format, BuildArgs(args));
+            base.Info(format, BuildArgs(args));
         }
 
         /// <summary>
@@ -85,9 +62,9 @@ namespace Akka.Logger.Serilog
         /// </summary>
         /// <param name="format">N/A</param>
         /// <param name="args">N/A</param>
-        public virtual void Warn(string format, params object[] args)
+        public new void Warn(string format, params object[] args)
         {
-            _adapter.Warning(format, BuildArgs(args));
+            base.Warning(format, BuildArgs(args));
         }
 
         /// <summary>
@@ -95,9 +72,9 @@ namespace Akka.Logger.Serilog
         /// </summary>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public virtual void Warning(string format, params object[] args)
+        public new void Warning(string format, params object[] args)
         {
-            _adapter.Warning(format, BuildArgs(args));
+            base.Warning(format, BuildArgs(args));
         }
 
         /// <summary>
@@ -107,7 +84,7 @@ namespace Akka.Logger.Serilog
         /// <param name="args">An optional list of items used to format the message.</param>
         public virtual void Error(string format, params object[] args)
         {
-            _adapter.Error(format, BuildArgs(args));
+            base.Error(format, BuildArgs(args));
         }
 
         /// <summary>
@@ -116,18 +93,18 @@ namespace Akka.Logger.Serilog
         /// <param name="cause">The exception associated with this message.</param>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public virtual void Error(Exception cause, string format, params object[] args)
+        public new void Error(Exception cause, string format, params object[] args)
         {
-            _adapter.Error(cause, format, BuildArgs(args));
+            base.Error(cause, format, BuildArgs(args));
         }
 
         /// <summary>Logs a message with a specified level.</summary>
         /// <param name="logLevel">The level used to log the message.</param>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public virtual void Log(LogLevel logLevel, string format, params object[] args)
+        public new void Log(LogLevel logLevel, string format, params object[] args)
         {
-            _adapter.Log(logLevel, format, BuildArgs(args));
+            base.Log(logLevel, format, BuildArgs(args));
         }
 
         public ILoggingAdapter SetContextProperty(string name, object value, bool destructureObjects = false)
@@ -140,7 +117,7 @@ namespace Akka.Logger.Serilog
                 Next = _enricherNode
             };
 
-            return new SerilogLoggingAdapter(_adapter, contextNode);
+            return new SerilogLoggingAdapter(_bus, _logSource, _logClass, contextNode);
         }
 
         private object[] BuildArgs(IEnumerable<object> args)
