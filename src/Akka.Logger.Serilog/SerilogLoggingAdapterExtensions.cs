@@ -30,7 +30,7 @@ namespace Akka.Logger.Serilog
             var logSource = context.Self.ToString();
             var logClass = context.Props.Type;
 
-            return Activator.CreateInstance(typeof(T), new BusLogging(context.System.EventStream, logSource, logClass, new DefaultLogMessageFormatter())) as T;
+            return new SerilogLoggingAdapter(context.System.EventStream, logSource, logClass);
         }
     }
 }
