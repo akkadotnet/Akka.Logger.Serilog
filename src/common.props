@@ -3,10 +3,15 @@
     <PackageTags>akka;actors;actor model;Akka;concurrency;serilog</PackageTags>
     <Copyright>Copyright © 2013-2018 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <PackageReleaseNotes>Removed SerilogLogMessageFormatter since its no longer needed
-Support for Akka 1.3.3
-Update to Serilog 2.6.0</PackageReleaseNotes>
-    <VersionPrefix>1.3.3</VersionPrefix>
+    <PackageReleaseNotes>Restored `SerilogLogMessageFormatter` in order to fix [Bug: `LogEvent.ToString()` blows up when using Serilog semantic formatting](https://github.com/akkadotnet/Akka.Logger.Serilog/issues/43).
+Upgraded to [Akka.NET v1.3.6](https://github.com/akkadotnet/akka.net/releases/tag/v1.3.6).
+If you intend on using any of the Serilog semantic logging formats in your logging strings, __you need to use the SerilogLoggingAdapter__ inside your instrumented code or there could be elsewhere inside parts of your `ActorSystem`:
+```csharp
+var log = Context.GetLogger&lt;SerilogLoggingAdapter&gt;(); // correct
+log.Info("My boss makes me use {semantic} logging", "semantic"); // serilog semantic logging format
+```
+This will allow all logging events to be consumed anywhere inside the `ActorSystem`, including places like the Akka.NET TestKit, without throwing `FormatException`s when they encounter semantic logging syntax outside of the `SerilogLogger`.</PackageReleaseNotes>
+    <VersionPrefix>1.3.6</VersionPrefix>
     <PackageIconUrl>http://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Logger.Serilog</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/akkadotnet/Akka.Logger.Serilog/blob/master/LICENSE</PackageLicenseUrl>
