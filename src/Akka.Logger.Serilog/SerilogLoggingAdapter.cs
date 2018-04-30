@@ -82,7 +82,7 @@ namespace Akka.Logger.Serilog
         /// </summary>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public virtual void Error(string format, params object[] args)
+        public new void Error(string format, params object[] args)
         {
             base.Error(format, BuildArgs(args));
         }
