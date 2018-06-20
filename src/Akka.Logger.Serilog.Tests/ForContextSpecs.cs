@@ -52,7 +52,7 @@ namespace Akka.Logger.Serilog.Tests
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
             logEvent.Level.Should().Be(LogEventLevel.Information);
             logEvent.Properties.ContainsKey("traceId").Should().BeTrue();
-            logEvent.Properties["traceId"].Should().Be(traceId);
+            logEvent.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
 
             _sink.Clear();
             AwaitCondition(() => _sink.Writes.Count == 0);
@@ -67,12 +67,11 @@ namespace Akka.Logger.Serilog.Tests
 
             // needs to still have the context from context1
             logEvent2.Properties.ContainsKey("traceId").Should().BeTrue();
-            logEvent2.Properties["traceId"].Should().Be(traceId);
+            logEvent2.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
 
             // and its own context from context2
             logEvent2.Properties.ContainsKey("spanId").Should().BeTrue();
-            logEvent2.Properties["spanId"].Should().Be(spanId);
-
+            logEvent2.Properties["spanId"].ToString().Should().BeEquivalentTo(spanId.ToString());
         }
 
         [Fact]
@@ -92,7 +91,7 @@ namespace Akka.Logger.Serilog.Tests
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
             logEvent.Level.Should().Be(LogEventLevel.Information);
             logEvent.Properties.ContainsKey("traceId").Should().BeTrue();
-            logEvent.Properties["traceId"].Should().BeEquivalentTo(traceId);
+            logEvent.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
 
             _sink.Clear();
             AwaitCondition(() => _sink.Writes.Count == 0);
@@ -107,11 +106,11 @@ namespace Akka.Logger.Serilog.Tests
 
             // needs to still have the context from context1
             logEvent2.Properties.ContainsKey("traceId").Should().BeTrue();
-            logEvent2.Properties["traceId"].Should().BeEquivalentTo(traceId);
+            logEvent2.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
 
             // and its own context from context2
             logEvent2.Properties.ContainsKey("spanId").Should().BeTrue();
-            logEvent2.Properties["spanId"].Should().BeEquivalentTo(spanId);
+            logEvent2.Properties["spanId"].ToString().Should().BeEquivalentTo(spanId.ToString());
 
         }
     }
