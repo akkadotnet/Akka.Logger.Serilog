@@ -1,3 +1,8 @@
+#### 1.3.9 August 23 2018 ####
+* [Fixed: Regression: ForContext API doesn't apply changes](https://github.com/akkadotnet/Akka.Logger.Serilog/issues/51)
+* Upgraded to Akka.NET v1.3.9.
+* Upgraded to Serilog v2.7.1.
+
 #### 1.3.6 April 28 2018 ####
 * Restored `SerilogLogMessageFormatter` in order to fix [Bug: `LogEvent.ToString()` blows up when using Serilog semantic formatting](https://github.com/akkadotnet/Akka.Logger.Serilog/issues/43). 
 * Upgraded to [Akka.NET v1.3.6](https://github.com/akkadotnet/akka.net/releases/tag/v1.3.6).
