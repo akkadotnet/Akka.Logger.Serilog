@@ -42,7 +42,7 @@ namespace Akka.Logger.Serilog
         /// </summary>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public new void Debug(string format, params object[] args)
+        public override void Debug(string format, params object[] args)
         {
             base.Debug(format, BuildArgs(args));
         }
@@ -52,7 +52,7 @@ namespace Akka.Logger.Serilog
         /// </summary>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public new void Info(string format, params object[] args)
+        public override void Info(string format, params object[] args)
         {
             base.Info(format, BuildArgs(args));
         }
@@ -60,9 +60,9 @@ namespace Akka.Logger.Serilog
         /// <summary>
         /// Obsolete. Use <see cref="M:Akka.Event.ILoggingAdapter.Warning(System.String,System.Object[])" /> instead!
         /// </summary>
-        /// <param name="format">N/A</param>
-        /// <param name="args">N/A</param>
-        public new void Warn(string format, params object[] args)
+        /// <param name="format">The message that is being logged.</param>
+        /// <param name="args">An optional list of items used to format the message.</param>
+        public override void Warn(string format, params object[] args)
         {
             base.Warning(format, BuildArgs(args));
         }
@@ -72,7 +72,7 @@ namespace Akka.Logger.Serilog
         /// </summary>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public new void Warning(string format, params object[] args)
+        public override void Warning(string format, params object[] args)
         {
             base.Warning(format, BuildArgs(args));
         }
@@ -82,7 +82,7 @@ namespace Akka.Logger.Serilog
         /// </summary>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public new void Error(string format, params object[] args)
+        public override void Error(string format, params object[] args)
         {
             base.Error(format, BuildArgs(args));
         }
@@ -93,7 +93,7 @@ namespace Akka.Logger.Serilog
         /// <param name="cause">The exception associated with this message.</param>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public new void Error(Exception cause, string format, params object[] args)
+        public override void Error(Exception cause, string format, params object[] args)
         {
             base.Error(cause, format, BuildArgs(args));
         }
@@ -102,7 +102,7 @@ namespace Akka.Logger.Serilog
         /// <param name="logLevel">The level used to log the message.</param>
         /// <param name="format">The message that is being logged.</param>
         /// <param name="args">An optional list of items used to format the message.</param>
-        public new void Log(LogLevel logLevel, string format, params object[] args)
+        public override void Log(LogLevel logLevel, string format, params object[] args)
         {
             base.Log(logLevel, format, BuildArgs(args));
         }

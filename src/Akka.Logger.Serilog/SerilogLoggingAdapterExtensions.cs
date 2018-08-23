@@ -15,8 +15,7 @@ namespace Akka.Logger.Serilog
         /// <param name="destructureObjects">If true, the value will be serialized as a structured object if possible; if false, the object will be recorded as a scalar or simple array.</param>
         public static ILoggingAdapter ForContext(this ILoggingAdapter adapter, string propertyName, object value, bool destructureObjects = false)
         {
-            var customAdapter = adapter as SerilogLoggingAdapter;
-            return customAdapter == null ? adapter : customAdapter.SetContextProperty(propertyName, value, destructureObjects);
+            return !(adapter is SerilogLoggingAdapter customAdapter) ? adapter : customAdapter.SetContextProperty(propertyName, value, destructureObjects);
         }
 
         /// <summary>
