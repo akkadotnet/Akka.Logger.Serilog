@@ -13,6 +13,11 @@ open Fake.DocFxHelper
 let product = "Akka.Logger.Serilog"
 let configuration = "Release"
 
+// Metadata used when signing packages and DLLs
+let signingName = "Akka.Logger.Serilog"
+let signingDescription = "Akka.Logger plugin for Serilog"
+let signingUrl = ""
+
 
 // Read release notes and version
 let solutionFile = FindFirstMatchingFile "*.sln" __SOURCE_DIRECTORY__  // dynamically look up the solution
