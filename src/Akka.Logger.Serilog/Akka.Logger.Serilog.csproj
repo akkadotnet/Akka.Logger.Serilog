@@ -3,7 +3,7 @@
 
 
   <PropertyGroup>
-    <TargetFrameworks>net45;netstandard1.6</TargetFrameworks>
+    <TargetFrameworks>net462;netstandard1.6</TargetFrameworks>
     <Description>Serilog logging adapter for Akka.NET.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>

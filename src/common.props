@@ -14,6 +14,7 @@ Upgraded to Serilog v2.7.1.</PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup>
     <XunitVersion>2.4.1</XunitVersion>
-    <TestSdkVersion>15.3.0</TestSdkVersion>
+    <TestSdkVersion>15.9.0</TestSdkVersion>
+    <NBenchVersion>1.2.2</NBenchVersion>
   </PropertyGroup>
 </Project>
