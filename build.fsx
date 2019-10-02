@@ -109,39 +109,24 @@ Target "RunTests" (fun _ ->
 )
 
 Target "NBench" <| fun _ ->
-    let nbenchTestPath = findToolInSubPath "NBench.Runner.exe" (toolsDir @@ "NBench.Runner*")
-    printfn "Using NBench.Runner: %s" nbenchTestPath
+    printfn "Using nbench"
 
-    let nbenchTestAssemblies = !! "./src/**/*Tests.Performance.dll" // doesn't support .NET Core at the moment
+    let projects = !! "./src/**/*Tests.Performance.dll" // doesn't support .NET Core at the moment
 
-    let runNBench assembly =
-        let includes = getBuildParam "include"
-        let excludes = getBuildParam "exclude"
-        let teamcityStr = (getBuildParam "teamcity")
-        let enableTeamCity = 
-            match teamcityStr with
-            | null -> false
-            | "" -> false
-            | _ -> bool.Parse teamcityStr
-
-        let args = StringBuilder()
-                |> append assembly
-                |> append (sprintf "output-directory=\"%s\"" outputPerfTests)
-                |> append (sprintf "concurrent=\"%b\"" true)
-                |> append (sprintf "trace=\"%b\"" true)
-                |> append (sprintf "teamcity=\"%b\"" enableTeamCity)
-                |> appendIfNotNullOrEmpty includes "include="
-                |> appendIfNotNullOrEmpty excludes "include="
-                |> toText
-
+    let runSingleProject project = 
+        let arguments = 
+            match (hasTeamCity) with 
+            | true -> (sprintf "nbench --nobuild --teamcity --concurrent true --trace true --output %s" (outputPerfTests)) 
+            | false -> (sprintf "nbench --nobuild --concurrent true --trace true --output %s" (outputPerfTests)) 
+ 
         let result = ExecProcess(fun info -> 
-            info.FileName <- nbenchTestPath
-            info.WorkingDirectory <- (Path.GetDirectoryName (FullName nbenchTestPath))
-            info.Arguments <- args) (System.TimeSpan.FromMinutes 45.0) (* Reasonably long-running task. *)
-        if result <> 0 then failwithf "NBench.Runner failed. %s %s" nbenchTestPath args
-    
-    nbenchTestAssemblies |> Seq.iter runNBench
+            info.FileName <- "dotnet" 
+            info.WorkingDirectory <- (Directory.GetParent project).FullName 
+            info.Arguments <- arguments) (TimeSpan.FromMinutes 30.0)
 
+        if result <> 0 then failwithf "NBench.Runner failed. %s " arguments
+       
+    projects |> Seq.iter runSingleProject 
 
 //--------------------------------------------------------------------------------
 // Code signing targets
