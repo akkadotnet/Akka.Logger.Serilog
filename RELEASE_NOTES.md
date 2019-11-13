@@ -1,5 +1,5 @@
 #### 1.3.10 October 05 2019 ####
-* Upgraded to Serilog v2.8.0
+* Upgraded to Serilog v2.9.0
 * Upgraded to Akka 1.3.15
 
 #### 1.3.9 August 23 2018 ####
