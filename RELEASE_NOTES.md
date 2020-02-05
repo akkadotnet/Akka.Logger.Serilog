@@ -1,5 +1,9 @@
+#### 1.3.11 February 05 2020 ####
+
+* Breaking change [Fixed: SourceContext should be set consistent with Serilog expectations](https://github.com/akkadotnet/Akka.Logger.Serilog/issues/78)
+
 #### 1.3.10 October 05 2019 ####
-* Upgraded to Serilog v2.8.0
+* Upgraded to Serilog v2.9.0
 * Upgraded to Akka 1.3.15
 
 #### 1.3.9 August 23 2018 ####

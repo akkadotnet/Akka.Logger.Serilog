@@ -10,6 +10,7 @@ using Akka.Actor;
 using Akka.Dispatch;
 using Akka.Event;
 using Serilog;
+using Serilog.Core;
 using Serilog.Core.Enrichers;
 
 namespace Akka.Logger.Serilog
@@ -37,11 +38,12 @@ namespace Akka.Logger.Serilog
         }
 
         private static ILogger GetLogger(LogEvent logEvent) {
-            var logger = Log.Logger.ForContext("SourceContext", Context.Sender.Path);
-            logger = logger
-                .ForContext("Timestamp", logEvent.Timestamp)
-                .ForContext("LogSource", logEvent.LogSource)
-                .ForContext("Thread", logEvent.Thread.ManagedThreadId.ToString().PadLeft(4, '0'));
+			var logger = Log.Logger
+				.ForContext(Constants.SourceContextPropertyName, logEvent.LogClass.FullName)
+				.ForContext("ActorPath", Context.Sender.Path)
+				.ForContext("Timestamp", logEvent.Timestamp)
+				.ForContext("LogSource", logEvent.LogSource)
+				.ForContext("Thread", logEvent.Thread.ManagedThreadId.ToString().PadLeft( 4, '0' ));
 
             var logMessage = logEvent.Message as LogMessage;
             if (logMessage != null)

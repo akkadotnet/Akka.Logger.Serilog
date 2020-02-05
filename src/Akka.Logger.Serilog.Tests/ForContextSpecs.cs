@@ -8,6 +8,7 @@ using Akka.Configuration;
 using Akka.Event;
 using FluentAssertions;
 using Serilog;
+using Serilog.Core;
 using Serilog.Events;
 using Xunit;
 using Xunit.Abstractions;
@@ -25,11 +26,11 @@ namespace Akka.Logger.Serilog.Tests
         public ForContextSpecs(ITestOutputHelper helper) : base(Config, output: helper)
         {
             global::Serilog.Log.Logger = new LoggerConfiguration()
-                .WriteTo.Sink(_sink)
-                .MinimumLevel.Information()
-                .CreateLogger();
+				.WriteTo.Sink(_sink)
+				.MinimumLevel.Information()
+				.CreateLogger();
 
-            var logSource = Sys.Name;
+			var logSource = Sys.Name;
             var logClass = typeof(ActorSystem);
 
             _loggingAdapter = new SerilogLoggingAdapter(Sys.EventStream, logSource, logClass);
@@ -113,7 +114,41 @@ namespace Akka.Logger.Serilog.Tests
             logEvent2.Properties["spanId"].ToString().Should().BeEquivalentTo(spanId.ToString());
 
         }
-    }
+
+		[Fact]
+		public void ShouldPassAlongClassNameAsSourceContext()
+		{
+			var context = _loggingAdapter;
+
+			_sink.Clear();
+			AwaitCondition(() => _sink.Writes.Count == 0);
+
+			context.Info( "hi" );
+			AwaitCondition(() => _sink.Writes.Count == 1);
+
+			_sink.Writes.TryDequeue( out var logEvent ).Should().BeTrue();
+			logEvent.Level.Should().Be(LogEventLevel.Information);
+			logEvent.Properties.ContainsKey(Constants.SourceContextPropertyName).Should().BeTrue();
+			logEvent.Properties[Constants.SourceContextPropertyName].ToString().Should().BeEquivalentTo($"\"{typeof(ActorSystem).FullName}\"");
+		}
+
+		[Fact]
+		public void ShouldPassAlongActorPath()
+		{
+			var context = _loggingAdapter;
+
+			_sink.Clear();
+			AwaitCondition(() => _sink.Writes.Count == 0);
+
+			context.Info( "hi" );
+			AwaitCondition(() => _sink.Writes.Count == 1);
+
+			_sink.Writes.TryDequeue( out var logEvent ).Should().BeTrue();
+			logEvent.Level.Should().Be(LogEventLevel.Information);
+			logEvent.Properties.ContainsKey("ActorPath").Should().BeTrue();
+			logEvent.Properties["ActorPath"].ToString().Should().BeEquivalentTo($"\"{this.TestActor.Path}\"");
+		}
+	}
 }
 
 
