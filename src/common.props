@@ -13,6 +13,6 @@
   <PropertyGroup>
     <XunitVersion>2.4.1</XunitVersion>
     <TestSdkVersion>15.9.0</TestSdkVersion>
-    <NBenchVersion>1.2.2</NBenchVersion>
+    <NBenchVersion>2.0.0</NBenchVersion>
   </PropertyGroup>
 </Project>
