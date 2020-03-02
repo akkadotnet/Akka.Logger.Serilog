@@ -2,8 +2,10 @@
   <Import Project="..\common.props" />
 
 
-  <PropertyGroup>    
-    <TargetFramework>net462</TargetFramework>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <TargetFramework>$(NetCoreTestVersion)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
