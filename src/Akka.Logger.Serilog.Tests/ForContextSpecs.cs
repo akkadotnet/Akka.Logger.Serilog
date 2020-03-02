@@ -7,6 +7,7 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
 using FluentAssertions;
+using Hocon;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -20,7 +21,7 @@ namespace Akka.Logger.Serilog.Tests
     {
         public static readonly Config Config = @"akka.loglevel = DEBUG
                                                  akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]";
-        private ILoggingAdapter _loggingAdapter;
+        private readonly ILoggingAdapter _loggingAdapter;
         private readonly TestSink _sink = new TestSink();
 
         public ForContextSpecs(ITestOutputHelper helper) : base(Config, output: helper)
