@@ -57,6 +57,16 @@ namespace Akka.Logger.Serilog
             base.Info(format, BuildArgs(args));
         }
 
+        public override void Info(Exception cause, string format, params object[] args)
+        {
+            base.Info(cause, format, BuildArgs(args));
+        }
+
+        public override void Debug(Exception cause, string format, params object[] args)
+        {
+            base.Debug(cause, format, BuildArgs(args));
+        }
+
         /// <summary>
         /// Obsolete. Use <see cref="M:Akka.Event.ILoggingAdapter.Warning(System.String,System.Object[])" /> instead!
         /// </summary>
@@ -65,6 +75,11 @@ namespace Akka.Logger.Serilog
         public override void Warn(string format, params object[] args)
         {
             base.Warning(format, BuildArgs(args));
+        }
+
+        public override void Warning(Exception cause, string format, params object[] args)
+        {
+            base.Warning(cause, format, BuildArgs(args));
         }
 
         /// <summary>
