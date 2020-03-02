@@ -1,7 +1,6 @@
-using System;
 using NBench;
 
-namespace Petabridge.Library.Tests.Performance
+namespace Akka.Logger.Serilog.Tests.Performance
 {
     class Program
     {
