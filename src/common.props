@@ -3,7 +3,7 @@
     <PackageTags>akka;actors;actor model;Akka;concurrency;serilog</PackageTags>
     <Copyright>Copyright © 2013-2018 Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <PackageReleaseNotes>Updated Serilog to [Akka.NET v1.4.1-RC2](https://getakka.net/community/whats-new/akkadotnet-v1.4.html)</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated Serilog to [Akka.NET v1.4.1](https://getakka.net/community/whats-new/akkadotnet-v1.4.html)</PackageReleaseNotes>
     <VersionPrefix>1.4.1</VersionPrefix>
     <PackageIconUrl>http://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Logger.Serilog</PackageProjectUrl>
@@ -14,7 +14,7 @@
     <XunitVersion>2.4.1</XunitVersion>
     <TestSdkVersion>16.5.0</TestSdkVersion>
     <NBenchVersion>2.0.1</NBenchVersion>
-    <AkkaVersion>1.4.1-rc3</AkkaVersion>
+    <AkkaVersion>1.4.1</AkkaVersion>
     <NetCoreTestVersion>netcoreapp3.1</NetCoreTestVersion>
     <NetFrameworkTestVersion>net461</NetFrameworkTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
