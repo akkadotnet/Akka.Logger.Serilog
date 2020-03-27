@@ -1,2 +1,2 @@
-#### 1.4.1 March 10 2020 ####
-* Updated Serilog to [Akka.NET v1.4.1](https://getakka.net/community/whats-new/akkadotnet-v1.4.html)
+#### 1.4.3 March 27 2020 ####
+* Updated Akka.Logger.Serilog to [Akka.NET v1.4.3](https://getakka.net/community/whats-new/akkadotnet-v1.4.html)
