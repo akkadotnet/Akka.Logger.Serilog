@@ -1,6 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using Serilog.Core;
 using Serilog.Events;
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace Akka.Logger.Serilog.Tests
 {

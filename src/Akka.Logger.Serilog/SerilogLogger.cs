@@ -60,17 +60,17 @@ namespace Akka.Logger.Serilog
         }
 
         private static void Handle(Warning logEvent) {
-              GetLogger(logEvent).Warning(GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+              GetLogger(logEvent).Warning(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
         }
 
         private static void Handle(Info logEvent)
         {
-              GetLogger(logEvent).Information(GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+              GetLogger(logEvent).Information(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
         }
 
         private static void Handle(Debug logEvent)
         {
-              GetLogger(logEvent).Debug(GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+              GetLogger(logEvent).Debug(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
         }
 
         /// <summary>
