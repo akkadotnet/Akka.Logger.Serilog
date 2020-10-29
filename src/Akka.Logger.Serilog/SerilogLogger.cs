@@ -27,8 +27,7 @@ namespace Akka.Logger.Serilog
 
         private static string GetFormat(object message)
         {
-            var logMessage = message as LogMessage;
-            return logMessage != null ? logMessage.Format : "{Message:l}";
+            return message is LogMessage logMessage ? logMessage.Format : "{Message:l}";
         }
 
         private static object[] GetArgs(object message)
