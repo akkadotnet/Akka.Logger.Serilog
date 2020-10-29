@@ -23,7 +23,7 @@ namespace Akka.Logger.Serilog
     /// </summary>
     public class SerilogLogger : ReceiveActor, IRequiresMessageQueue<ILoggerMessageQueueSemantics>
     {
-        private readonly ILoggingAdapter _log = Context.GetLogger();
+        private readonly ILoggingAdapter _log = Logging.GetLogger(Context.System.EventStream, "SerilogLogger");
 
         private static string GetFormat(object message)
         {
