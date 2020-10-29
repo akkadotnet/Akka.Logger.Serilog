@@ -10,6 +10,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitVersion)" />
     <PackageReference Include="xunit" Version="$(XunitVersion)" />
     <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
+    <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
     <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
   </ItemGroup>
