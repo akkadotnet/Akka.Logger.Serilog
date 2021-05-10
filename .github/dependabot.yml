@@ -5,7 +5,3 @@ updates:
   schedule:
     interval: daily
   open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: Microsoft.NET.Test.Sdk
-    versions:
-    - 16.8.3
