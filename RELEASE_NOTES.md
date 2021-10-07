@@ -1,3 +1,6 @@
+#### 1.4.26 October 7 2021 ####
+* Updated to [Akka.NET v1.4.26](https://github.com/akkadotnet/akka.net/releases/tag/1.4.26)
+
 #### 1.4.25 September 9 2021 ####
 * Updated to [Akka.NET v1.4.25](https://github.com/akkadotnet/akka.net/releases/tag/1.4.25)
 
