@@ -12,7 +12,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <XunitVersion>2.4.1</XunitVersion>
-    <XunitRunnerVersion>2.4.3</XunitRunnerVersion>
+    <XunitRunnerVersion>2.4.4</XunitRunnerVersion>
     <TestSdkVersion>17.0.0</TestSdkVersion>
     <NBenchVersion>2.0.1</NBenchVersion>
     <AkkaVersion>1.4.37</AkkaVersion>
