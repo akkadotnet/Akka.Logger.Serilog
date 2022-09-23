@@ -11,11 +11,11 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
-    <XunitVersion>2.4.1</XunitVersion>
-    <XunitRunnerVersion>2.4.3</XunitRunnerVersion>
-    <TestSdkVersion>17.0.0</TestSdkVersion>
+    <XunitVersion>2.4.2</XunitVersion>
+    <XunitRunnerVersion>2.4.5</XunitRunnerVersion>
+    <TestSdkVersion>17.3.1</TestSdkVersion>
     <NBenchVersion>2.0.1</NBenchVersion>
-    <AkkaVersion>1.4.31</AkkaVersion>
+    <AkkaVersion>1.4.42</AkkaVersion>
     <NetCoreTestVersion>netcoreapp3.1</NetCoreTestVersion>
     <NetFrameworkTestVersion>net471</NetFrameworkTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
