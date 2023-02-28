@@ -7,7 +7,7 @@ using Serilog.Core.Enrichers;
 
 namespace Akka.Logger.Serilog
 {
-    public class SerilogLoggingAdapter : BusLogging
+    public class SerilogLoggingAdapter : LoggingAdapterBase
     {
         private readonly LoggingBus _bus;
         private readonly Type _logClass;
@@ -29,98 +29,36 @@ namespace Akka.Logger.Serilog
         {
         }
 
-        private SerilogLoggingAdapter(LoggingBus bus, string logSource, Type logClass, ContextNode enricher) : base(bus, logSource, logClass, SerilogLogMessageFormatter.Instance)
+        private SerilogLoggingAdapter(LoggingBus bus, string logSource, Type logClass, ContextNode enricher) : base(SerilogLogMessageFormatter.Instance)
         {
             _bus = bus;
             _logSource = logSource;
             _logClass = logClass;
             _enricherNode = enricher;
+            
+            IsErrorEnabled = bus.LogLevel <= LogLevel.ErrorLevel;
+            IsWarningEnabled = bus.LogLevel <= LogLevel.WarningLevel;
+            IsInfoEnabled = bus.LogLevel <= LogLevel.InfoLevel;
+            IsDebugEnabled = bus.LogLevel <= LogLevel.DebugLevel;
         }
+        
+        private LogEvent CreateLogEvent(LogLevel logLevel, object message, Exception cause = null)
+            => logLevel switch
+            {
+                LogLevel.DebugLevel => new Debug(cause, _logSource, _logClass, message),
+                LogLevel.InfoLevel => new Info(cause, _logSource, _logClass, message),
+                LogLevel.WarningLevel => new Warning(cause, _logSource, _logClass, message),
+                LogLevel.ErrorLevel => new Error(cause, _logSource, _logClass, message),
+                _ => throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null)
+            };
 
-        /// <summary>
-        /// Logs a <see cref="F:Akka.Event.LogLevel.DebugLevel" /> message.
-        /// </summary>
-        /// <param name="format">The message that is being logged.</param>
-        /// <param name="args">An optional list of items used to format the message.</param>
-        public override void Debug(string format, params object[] args)
-        {
-            base.Debug(format, BuildArgs(args));
-        }
+        protected override void NotifyLog(LogLevel logLevel, object message, Exception cause = null)
+            => _bus.Publish(CreateLogEvent(logLevel, message, cause));
 
-        /// <summary>
-        /// Logs a <see cref="F:Akka.Event.LogLevel.InfoLevel" /> message.
-        /// </summary>
-        /// <param name="format">The message that is being logged.</param>
-        /// <param name="args">An optional list of items used to format the message.</param>
-        public override void Info(string format, params object[] args)
-        {
-            base.Info(format, BuildArgs(args));
-        }
-
-        public override void Info(Exception cause, string format, params object[] args)
-        {
-            base.Info(cause, format, BuildArgs(args));
-        }
-
-        public override void Debug(Exception cause, string format, params object[] args)
-        {
-            base.Debug(cause, format, BuildArgs(args));
-        }
-
-        /// <summary>
-        /// Obsolete. Use <see cref="M:Akka.Event.ILoggingAdapter.Warning(System.String,System.Object[])" /> instead!
-        /// </summary>
-        /// <param name="format">The message that is being logged.</param>
-        /// <param name="args">An optional list of items used to format the message.</param>
-        public override void Warn(string format, params object[] args)
-        {
-            base.Warning(format, BuildArgs(args));
-        }
-
-        public override void Warning(Exception cause, string format, params object[] args)
-        {
-            base.Warning(cause, format, BuildArgs(args));
-        }
-
-        /// <summary>
-        /// Logs a <see cref="F:Akka.Event.LogLevel.WarningLevel" /> message.
-        /// </summary>
-        /// <param name="format">The message that is being logged.</param>
-        /// <param name="args">An optional list of items used to format the message.</param>
-        public override void Warning(string format, params object[] args)
-        {
-            base.Warning(format, BuildArgs(args));
-        }
-
-        /// <summary>
-        /// Logs a <see cref="F:Akka.Event.LogLevel.ErrorLevel" /> message.
-        /// </summary>
-        /// <param name="format">The message that is being logged.</param>
-        /// <param name="args">An optional list of items used to format the message.</param>
-        public override void Error(string format, params object[] args)
-        {
-            base.Error(format, BuildArgs(args));
-        }
-
-        /// <summary>
-        /// Logs a <see cref="F:Akka.Event.LogLevel.ErrorLevel" /> message and associated exception.
-        /// </summary>
-        /// <param name="cause">The exception associated with this message.</param>
-        /// <param name="format">The message that is being logged.</param>
-        /// <param name="args">An optional list of items used to format the message.</param>
-        public override void Error(Exception cause, string format, params object[] args)
-        {
-            base.Error(cause, format, BuildArgs(args));
-        }
-
-        /// <summary>Logs a message with a specified level.</summary>
-        /// <param name="logLevel">The level used to log the message.</param>
-        /// <param name="format">The message that is being logged.</param>
-        /// <param name="args">An optional list of items used to format the message.</param>
-        public override void Log(LogLevel logLevel, string format, params object[] args)
-        {
-            base.Log(logLevel, format, BuildArgs(args));
-        }
+        public override bool IsDebugEnabled { get; }
+        public override bool IsInfoEnabled { get; }
+        public override bool IsWarningEnabled { get; }
+        public override bool IsErrorEnabled { get; }
 
         public ILoggingAdapter SetContextProperty(string name, object value, bool destructureObjects = false)
         {
@@ -137,15 +75,15 @@ namespace Akka.Logger.Serilog
 
         private object[] BuildArgs(IEnumerable<object> args)
         {
+            if (_enricherNode == null) 
+                return args.ToArray();
+            
             var newArgs = args.ToList();
-            if (_enricherNode != null)
+            var currentNode = _enricherNode;
+            while (currentNode != null)
             {
-                var currentNode = _enricherNode;
-                while (currentNode != null)
-                {
-                    newArgs.Add(currentNode.Enricher);
-                    currentNode = currentNode.Next;
-                }
+                newArgs.Add(currentNode.Enricher);
+                currentNode = currentNode.Next;
             }
             return newArgs.ToArray();
         }
