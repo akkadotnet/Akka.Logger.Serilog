@@ -29,13 +29,15 @@ namespace Akka.Logger.Serilog
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string GetFormat(object message)
         {
-            return message is LogMessage logMessage ? logMessage.Format : "{Message:l}";
+            return message is LogMessage logMessage 
+                ? logMessage.Format 
+                : message is string format ? format : "{Message:l}";
         }
 
         private static object[] GetArgs(object message)
         {
             var logMessage = message as LogMessage;
-            return logMessage?.Parameters().Where(a => a is not PropertyEnricher).ToArray() ?? new[] { message };
+            return logMessage?.Parameters().Where(a => a is not PropertyEnricher).ToArray() ?? System.Array.Empty<object>();
         }
 
         private static ILogger GetLogger(LogEvent logEvent) {
