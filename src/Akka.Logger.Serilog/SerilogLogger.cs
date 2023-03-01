@@ -6,6 +6,7 @@
 //-----------------------------------------------------------------------
 
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Akka.Actor;
 using Akka.Dispatch;
 using Akka.Event;
@@ -25,6 +26,7 @@ namespace Akka.Logger.Serilog
     {
         private readonly ILoggingAdapter _log = Logging.GetLogger(Context.System.EventStream, "SerilogLogger");
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string GetFormat(object message)
         {
             return message is LogMessage logMessage ? logMessage.Format : "{Message:l}";
@@ -33,7 +35,7 @@ namespace Akka.Logger.Serilog
         private static object[] GetArgs(object message)
         {
             var logMessage = message as LogMessage;
-            return logMessage?.Args.Where(a => !(a is PropertyEnricher)).ToArray() ?? new[] { message };
+            return logMessage?.Parameters().Where(a => a is not PropertyEnricher).ToArray() ?? new[] { message };
         }
 
         private static ILogger GetLogger(LogEvent logEvent) {
@@ -42,34 +44,32 @@ namespace Akka.Logger.Serilog
 				.ForContext("ActorPath", Context.Sender.Path)
 				.ForContext("Timestamp", logEvent.Timestamp)
 				.ForContext("LogSource", logEvent.LogSource)
-				.ForContext("Thread", logEvent.Thread.ManagedThreadId.ToString().PadLeft( 4, '0' ));
+				.ForContext("Thread", logEvent.Thread.ManagedThreadId.ToString("0000"));
 
-            var logMessage = logEvent.Message as LogMessage;
-            if (logMessage != null)
+            if (logEvent.Message is SerilogPayload logMessage)
             {
-                logger = logMessage.Args.OfType<PropertyEnricher>().Aggregate(logger, (current, enricher) => current.ForContext(enricher));
+                logger = logMessage.Enrichers.OfType<PropertyEnricher>().Aggregate(logger, (current, enricher) => current.ForContext(enricher));
             }
 
             return logger;
         }
 
         private static void Handle(Error logEvent) {
-            
             GetLogger(logEvent).Error(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
         }
 
         private static void Handle(Warning logEvent) {
-              GetLogger(logEvent).Warning(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+            GetLogger(logEvent).Warning(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
         }
 
         private static void Handle(Info logEvent)
         {
-              GetLogger(logEvent).Information(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+            GetLogger(logEvent).Information(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
         }
 
         private static void Handle(Debug logEvent)
         {
-              GetLogger(logEvent).Debug(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+            GetLogger(logEvent).Debug(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
         }
 
         /// <summary>
@@ -77,11 +77,11 @@ namespace Akka.Logger.Serilog
         /// </summary>
         public SerilogLogger()
         {
-            Receive<Error>(m => Handle(m));
-            Receive<Warning>(m => Handle(m));
-            Receive<Info>(m => Handle(m));
-            Receive<Debug>(m => Handle(m));
-            Receive<InitializeLogger>(m =>
+            Receive<Error>(Handle);
+            Receive<Warning>(Handle);
+            Receive<Info>(Handle);
+            Receive<Debug>(Handle);
+            Receive<InitializeLogger>(_ =>
             {
                 _log.Info("SerilogLogger started");
                 Sender.Tell(new LoggerInitialized());

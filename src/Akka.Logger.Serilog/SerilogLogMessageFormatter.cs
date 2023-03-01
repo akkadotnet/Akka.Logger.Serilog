@@ -15,7 +15,7 @@ namespace Akka.Logger.Serilog
     {
         private readonly MessageTemplateCache _templateCache;
 
-        public static readonly SerilogLogMessageFormatter Instance = new SerilogLogMessageFormatter();
+        public static readonly SerilogLogMessageFormatter Instance = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SerilogLogMessageFormatter"/> class.
@@ -52,5 +52,18 @@ namespace Akka.Logger.Serilog
 
             return template.Render(properties);
         }
+
+        /// <summary>
+        /// Converts the specified template string to a text string using the specified
+        /// token array to match replacements.
+        /// </summary>
+        /// <param name="format">The template string used in the conversion.</param>
+        /// <param name="args">The <see cref="IEnumerable{T}"/> that contains values to replace in the template.</param>
+        /// <returns>
+        /// A text string where the template placeholders have been replaced with
+        /// their corresponding values.
+        /// </returns>
+        public string Format(string format, IEnumerable<object> args)
+            => Format(format, args.ToArray());
     }
 }
