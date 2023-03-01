@@ -35,7 +35,7 @@ namespace Akka.Logger.Serilog
         private static object[] GetArgs(object message)
         {
             var logMessage = message as LogMessage;
-            return logMessage?.Args.Where(a => a is not PropertyEnricher).ToArray() ?? new[] { message };
+            return logMessage?.Parameters().Where(a => a is not PropertyEnricher).ToArray() ?? new[] { message };
         }
 
         private static ILogger GetLogger(LogEvent logEvent) {
@@ -46,9 +46,9 @@ namespace Akka.Logger.Serilog
 				.ForContext("LogSource", logEvent.LogSource)
 				.ForContext("Thread", logEvent.Thread.ManagedThreadId.ToString("0000"));
 
-            if (logEvent.Message is LogMessage logMessage)
+            if (logEvent.Message is SerilogPayload logMessage)
             {
-                logger = logMessage.Args.OfType<PropertyEnricher>().Aggregate(logger, (current, enricher) => current.ForContext(enricher));
+                logger = logMessage.Enrichers.OfType<PropertyEnricher>().Aggregate(logger, (current, enricher) => current.ForContext(enricher));
             }
 
             return logger;
