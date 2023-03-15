@@ -20,7 +20,7 @@ namespace Akka.Logger.Serilog
         /// <summary>
         /// Initializes a new instance of the <see cref="SerilogLogMessageFormatter"/> class.
         /// </summary>
-        private SerilogLogMessageFormatter()
+        public SerilogLogMessageFormatter()
         {
             _templateCache = new MessageTemplateCache(new MessageTemplateParser());
         }
