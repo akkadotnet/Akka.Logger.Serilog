@@ -2,7 +2,7 @@
 
 This is the Serilog integration plugin for Akka.NET. Please check out our [documentation](http://getakka.net/articles/utilities/serilog.html) on how to get the most out of this plugin.
 
-Targets [Serilog 2.10.0](https://www.nuget.org/packages/Serilog/2.10.0).
+Targets [Serilog 2.12.0](https://www.nuget.org/packages/Serilog/2.12.0).
 
 ### Semantic Logging Syntax
 If you intend on using any of the Serilog semantic logging formats in your logging strings, __you need to use the SerilogLoggingAdapter__ inside your instrumented code or there could be elsewhere inside parts of your `ActorSystem`:
