@@ -47,7 +47,8 @@ namespace Akka.Logger.Serilog
                 if (propertyToken == null)
                     break;
 
-                properties.Add(propertyToken.PropertyName, new ScalarValue(args[i]));
+                if(!properties.ContainsKey(propertyToken.PropertyName))
+                    properties.Add(propertyToken.PropertyName, new ScalarValue(args[i]));
             }
 
             return template.Render(properties);
