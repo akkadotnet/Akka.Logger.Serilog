@@ -51,6 +51,11 @@ namespace Akka.Logger.Serilog
                 logger = logMessage.Enrichers.OfType<PropertyEnricher>().Aggregate(logger, (current, enricher) => current.ForContext(enricher));
             }
 
+            if (logEvent.Message is LogMessage message)
+            {
+                logger = message.Parameters().Where(a => a is ILogEventEnricher).Aggregate(logger, (current, enricher) => current.ForContext((ILogEventEnricher)enricher));
+            }
+
             return logger;
         }
 

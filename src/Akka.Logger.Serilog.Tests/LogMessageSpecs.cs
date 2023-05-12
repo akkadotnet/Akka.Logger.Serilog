@@ -4,6 +4,7 @@ using Akka.Configuration;
 using Akka.Event;
 using FluentAssertions;
 using Serilog;
+using Serilog.Core.Enrichers;
 using Serilog.Events;
 using Xunit;
 using Xunit.Abstractions;
@@ -41,6 +42,31 @@ namespace Akka.Logger.Serilog.Tests
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
             logEvent.Level.Should().Be(LogEventLevel.Debug);
             logEvent.RenderMessage().Should().Contain("hi");
+        }
+
+        [Fact]
+        public void ShouldLogMessageWithPropertyEnrichers()
+        {
+            var context = _loggingAdapter;
+
+            _sink.Clear();
+            AwaitCondition(() => _sink.Writes.Count == 0);
+
+            context.Debug("Hi {0}", "Harry Potter", 
+                new PropertyEnricher("Address", "No. 4 Privet Drive"),
+                new PropertyEnricher("Town", "Little Whinging"),
+                new PropertyEnricher("County", "Surrey"),
+                new PropertyEnricher("Country", "England"));
+            AwaitCondition(() => _sink.Writes.Count == 1);
+
+            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+            logEvent.Level.Should().Be(LogEventLevel.Debug);
+            logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+            logEvent.Properties.Should().ContainKeys("Address", "Town", "County", "Country");
+            logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+            logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+            logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+            logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
         }
 
         [Fact]
