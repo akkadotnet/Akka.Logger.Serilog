@@ -9,6 +9,7 @@ using Akka.Event;
 using FluentAssertions;
 using Serilog;
 using Serilog.Core;
+using Serilog.Core.Enrichers;
 using Serilog.Events;
 using Xunit;
 using Xunit.Abstractions;
@@ -33,7 +34,57 @@ namespace Akka.Logger.Serilog.Tests
 			var logSource = Sys.Name;
             var logClass = typeof(ActorSystem);
 
-            _loggingAdapter = new SerilogLoggingAdapter(Sys.EventStream, logSource, logClass);
+            _loggingAdapter = Sys.GetLogger<SerilogLoggingAdapter>(logSource, logClass);
+        }
+
+        [Fact]
+        public void ShouldLogMessageWithContextProperty()
+        {
+	        var context = _loggingAdapter
+		        .ForContext("Address", "No. 4 Privet Drive")
+		        .ForContext("Town", "Little Whinging")
+		        .ForContext("County", "Surrey")
+		        .ForContext("Country", "England");
+
+	        _sink.Clear();
+	        AwaitCondition(() => _sink.Writes.Count == 0);
+
+	        context.Info("Hi {Person}", "Harry Potter");
+	        AwaitCondition(() => _sink.Writes.Count == 1);
+
+	        _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+	        logEvent.Level.Should().Be(LogEventLevel.Information);
+	        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+	        logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
+	        logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
+	        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+	        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+	        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+	        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+        }
+
+        [Fact]
+        public void ShouldLogMessageWithContextPropertyAndPropertyEnricher()
+        {
+	        var context = _loggingAdapter
+		        .ForContext("Address", "No. 4 Privet Drive")
+		        .ForContext("Town", "Little Whinging");
+
+	        _sink.Clear();
+	        AwaitCondition(() => _sink.Writes.Count == 0);
+
+	        context.Info("Hi {Person}", "Harry Potter", new PropertyEnricher("County", "Surrey"), new PropertyEnricher("Country", "England"));
+	        AwaitCondition(() => _sink.Writes.Count == 1);
+
+	        _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+	        logEvent.Level.Should().Be(LogEventLevel.Information);
+	        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+	        logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
+	        logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
+	        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+	        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+	        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+	        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
         }
 
         [Fact]

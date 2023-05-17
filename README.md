@@ -12,7 +12,50 @@ var log = Context.GetLogger<SerilogLoggingAdapter>(); // correct
 log.Info("My boss makes me use {semantic} logging", "semantic"); // serilog semantic logging format
 ```
 
+or
+
+```csharp
+var log = MyActorSystem.GetLogger<SerilogLoggingAdapter>(myContextObject); // correct
+log.Info("My boss makes me use {semantic} logging", "semantic"); // serilog semantic logging format
+```
+
+or
+```csharp
+var log = MyActorSystem.GetLogger<SerilogLoggingAdapter>(contextName, contextType); // correct
+log.Info("My boss makes me use {semantic} logging", "semantic"); // serilog semantic logging format
+```
+
 This will allow all logging events to be consumed anywhere inside the `ActorSystem`, including places like the Akka.NET TestKit, without throwing `FormatException`s when they encounter semantic logging syntax outside of the `SerilogLogger`.
+
+### Adding Property Enricher To Your Logs
+
+#### Default Properties
+You can add property enrichers to the logging adapter that will be added to all logging calls to that logging adapter.
+
+```csharp
+var log = Context.GetLogger<SerilogLoggingAdapter>()
+    .ForContext("Address", "No. 4 Privet Drive")
+    .ForContext("Town", "Little Whinging")
+    .ForContext("County", "Surrey")
+    .ForContext("Country", "England");
+log.Info("My boss makes me use {Semantic} logging", "semantic");
+```
+
+All logging done using the `log` `ILoggingAdapter` instance will append "Address", "Town", "County", and "Country" properties into the Serilog log.
+
+#### One-off Properties
+
+You can add one-off property to a single log message by appending `PropertyEnricher` instances at the end of your logging calls.
+
+```csharp
+var log = Context.GetLogger<SerilogLoggingAdapter>();
+log.Info(
+    "My boss makes me use {Semantic} logging", "semantic",
+    new PropertyEnricher("County", "Surrey"), 
+    new PropertyEnricher("Country", "England"));
+```
+
+This log entry will have "County" and "Country" properties added to it.
 
 ## Building this solution
 To run the build script associated with this solution, execute the following:
