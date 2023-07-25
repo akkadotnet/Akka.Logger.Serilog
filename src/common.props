@@ -16,7 +16,7 @@
     <XunitRunnerVersion>2.5.0</XunitRunnerVersion>
     <TestSdkVersion>17.6.3</TestSdkVersion>
     <NBenchVersion>2.0.1</NBenchVersion>
-    <AkkaVersion>1.5.9</AkkaVersion>
+    <AkkaVersion>1.5.10</AkkaVersion>
     <NetCoreTestVersion>netcoreapp3.1</NetCoreTestVersion>
     <NetFrameworkTestVersion>net471</NetFrameworkTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
