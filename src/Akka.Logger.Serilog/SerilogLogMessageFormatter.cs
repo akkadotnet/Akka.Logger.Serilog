@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Akka.Event;
+using Serilog;
 using Serilog.Events;
 using Serilog.Parsing;
 
@@ -37,6 +38,9 @@ namespace Akka.Logger.Serilog
         /// </returns>
         public string Format(string format, params object[] args)
         {
+            if (Log.Logger.BindMessageTemplate(format, args, out var boundTemplate, out var boundProps))
+                return boundTemplate.Render(boundProps.ToDictionary(p => p.Name, p => p.Value));
+            
             var template = _templateCache.Parse(format);
             var propertyTokens = template.Tokens.OfType<PropertyToken>().ToArray();
             var properties = new Dictionary<string, LogEventPropertyValue>();
