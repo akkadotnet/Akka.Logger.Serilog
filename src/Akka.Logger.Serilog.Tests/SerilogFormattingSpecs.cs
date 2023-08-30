@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
+using Akka.Logger.Serilog.Tests.Generator;
 using FluentAssertions;
 using Serilog;
 using Xunit;
@@ -15,10 +20,13 @@ namespace Akka.Logger.Serilog.Tests
         private ILogger _serilogLogger;
 
         private ILoggingAdapter _loggingAdapter;
+        private TestSink _sink;
 
         public SerilogFormattingSpecs(ITestOutputHelper helper) : base(Config, output: helper)
         {
+            _sink = new TestSink();
             _serilogLogger = new LoggerConfiguration()
+                .WriteTo.Sink(_sink)
                 .WriteTo.ColoredConsole()
                 .MinimumLevel.Information()
                 .CreateLogger();
@@ -29,6 +37,26 @@ namespace Akka.Logger.Serilog.Tests
             _loggingAdapter = new SerilogLoggingAdapter(Sys.EventStream, logSource, logClass);
         }
 
+        [Theory(DisplayName = "Serilog output must be compatible with previous version")]
+        [MemberData(nameof(MessageFormatDataGenerator))]
+        public async Task LogOutputRegressionTest(string expected, string messageFormat, object[] args)
+        {
+            _sink.Clear();
+            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            
+            _serilogLogger.Information(messageFormat, args);
+            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+
+            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+            logEvent.RenderMessage().Should().Be(expected);
+            
+            Sys.EventStream.Subscribe(TestActor, typeof(LogEvent));
+            _loggingAdapter.Log(LogLevel.InfoLevel, messageFormat, args);
+            var akkaLogEvent = ExpectMsg<LogEvent>();
+
+            akkaLogEvent.ToString().Should().Contain(expected);
+        }
+        
         [Theory]
         [InlineData(LogLevel.DebugLevel, "test case {0}", new object[]{ 1 })]
         [InlineData(LogLevel.DebugLevel, "test case {myNum}", new object[] { 1 })]
@@ -47,6 +75,22 @@ namespace Akka.Logger.Serilog.Tests
             };
 
             logWrite.Should().NotThrow<FormatException>();
+        }
+
+        public static IEnumerable<object[]> MessageFormatDataGenerator()
+        {
+            var testDataFolder = new DirectoryInfo(Path.Combine(".", "TestFiles"));
+            foreach (var fileInfo in testDataFolder.EnumerateFiles())
+            {
+                var logOutputs = File.ReadLines(fileInfo.FullName).ToArray();
+                foreach (var i in Enumerable.Range(0, TestData.Args.Length))
+                {
+                    var expected = logOutputs[i];
+                    var messageFormat = TestData.MessageFormats[i];
+                    var args = TestData.Args[i];
+                    yield return new object[] { expected, messageFormat, args };
+                }
+            }
         }
     }
 }
