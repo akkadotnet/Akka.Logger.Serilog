@@ -17,10 +17,12 @@ namespace Akka.Logger.Serilog.Tests
                                                  akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]";
 
         private readonly ILoggingAdapter _loggingAdapter;
-        private readonly TestSink _sink = new TestSink();
+        private readonly TestSink _sink;
 
         public LogMessageSpecs(ITestOutputHelper helper) : base(Config, output: helper)
         {
+            _sink = new TestSink(helper);
+            
             global::Serilog.Log.Logger = new LoggerConfiguration()
                 .WriteTo.Sink(_sink)
                 .MinimumLevel.Debug()
