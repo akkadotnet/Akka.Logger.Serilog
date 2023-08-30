@@ -28,7 +28,7 @@ namespace Akka.Logger.Serilog.Tests.Generator
         
             sink.Clear();
 
-            using (var fileWriter = new StreamWriter($"./TestFiles/test-v{version}.tf"))
+            using (var fileWriter = new StreamWriter($"./TestFiles/v{version}.tf"))
             {
                 foreach (var i in Enumerable.Range(0, TestData.MessageFormats.Length))
                 {

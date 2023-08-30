@@ -39,7 +39,7 @@ namespace Akka.Logger.Serilog.Tests
 
         [Theory(DisplayName = "Serilog output must be compatible with previous version")]
         [MemberData(nameof(MessageFormatDataGenerator))]
-        public async Task LogOutputRegressionTest(string expected, string messageFormat, object[] args)
+        public async Task LogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {
             _sink.Clear();
             await AwaitConditionAsync(() => _sink.Writes.Count == 0);
@@ -82,13 +82,14 @@ namespace Akka.Logger.Serilog.Tests
             var testDataFolder = new DirectoryInfo(Path.Combine(".", "TestFiles"));
             foreach (var fileInfo in testDataFolder.EnumerateFiles())
             {
+                var version = Path.GetFileNameWithoutExtension(fileInfo.Name);
                 var logOutputs = File.ReadLines(fileInfo.FullName).ToArray();
                 foreach (var i in Enumerable.Range(0, TestData.Args.Length))
                 {
                     var expected = logOutputs[i];
                     var messageFormat = TestData.MessageFormats[i];
                     var args = TestData.Args[i];
-                    yield return new object[] { expected, messageFormat, args };
+                    yield return new object[] { version, expected, messageFormat, args };
                 }
             }
         }
