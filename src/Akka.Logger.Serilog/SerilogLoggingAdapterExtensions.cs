@@ -31,5 +31,21 @@ namespace Akka.Logger.Serilog
 
             return new SerilogLoggingAdapter(context.System.EventStream, logSource, logClass);
         }
+        
+        public static ILoggingAdapter GetLogger<T>(this ActorSystem system, object logSourceObj)
+            where T : class, ILoggingAdapter
+        {
+            if (logSourceObj is null)
+                throw new ArgumentNullException(nameof(logSourceObj));
+            
+            var logSource = LogSource.Create(logSourceObj, system);
+            return new SerilogLoggingAdapter(system.EventStream, logSource.Source, logSource.Type);
+        }
+        
+        public static ILoggingAdapter GetLogger<T>(this ActorSystem system, string logSource, Type logType)
+            where T : class, ILoggingAdapter
+        {
+            return new SerilogLoggingAdapter(system.EventStream, logSource, logType);
+        }
     }
 }

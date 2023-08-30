@@ -29,13 +29,22 @@ namespace Akka.Logger.Serilog
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string GetFormat(object message)
         {
+            // Unwrap SerilogPayload
+            if (message is SerilogPayload payload)
+                message = payload.Message;
+            
             return message is LogMessage logMessage ? logMessage.Format : "{Message:l}";
         }
 
         private static object[] GetArgs(object message)
         {
-            var logMessage = message as LogMessage;
-            return logMessage?.Parameters().Where(a => a is not PropertyEnricher).ToArray() ?? new[] { message };
+            // Unwrap SerilogPayload
+            if (message is SerilogPayload payload)
+                message = payload.Message;
+            
+            return message is LogMessage logMessage 
+                ? logMessage.Parameters().Where(a => a is not PropertyEnricher).ToArray() 
+                : new[] { message };
         }
 
         private static ILogger GetLogger(LogEvent logEvent) {
@@ -46,9 +55,20 @@ namespace Akka.Logger.Serilog
 				.ForContext("LogSource", logEvent.LogSource)
 				.ForContext("Thread", logEvent.Thread.ManagedThreadId.ToString("0000"));
 
-            if (logEvent.Message is SerilogPayload logMessage)
+            if (logEvent.Message is SerilogPayload serilogPayload)
             {
-                logger = logMessage.Enrichers.OfType<PropertyEnricher>().Aggregate(logger, (current, enricher) => current.ForContext(enricher));
+                var enrichers = serilogPayload.Enrichers.ToList();
+                if (serilogPayload.Message is LogMessage logMessage)
+                    enrichers.AddRange(logMessage.Parameters().OfType<ILogEventEnricher>());
+                if (enrichers.Count > 0)
+                    logger = logger.ForContext(enrichers);
+            }
+
+            if (logEvent.Message is LogMessage message)
+            {
+                var enrichers = message.Parameters().OfType<ILogEventEnricher>().ToList();
+                if (enrichers.Count > 0)
+                    logger = logger.ForContext(enrichers);
             }
 
             return logger;
