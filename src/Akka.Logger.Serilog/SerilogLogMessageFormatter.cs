@@ -38,6 +38,9 @@ namespace Akka.Logger.Serilog
         /// </returns>
         public string Format(string format, params object[] args)
         {
+            // We're using serilog built-in function to bind all the object arguments to their proper
+            // value types. If this fails, we fell back to the old implementation where we map everything
+            // to ScalarValue.
             if (Log.Logger.BindMessageTemplate(format, args, out var boundTemplate, out var boundProps))
                 return boundTemplate.Render(boundProps.ToDictionary(p => p.Name, p => p.Value));
             
