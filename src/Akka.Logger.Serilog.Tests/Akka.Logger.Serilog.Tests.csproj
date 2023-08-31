@@ -3,6 +3,8 @@
 
   <PropertyGroup>    
     <TargetFrameworks>$(NetFrameworkTestVersion);$(NetCoreTestVersion)</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <StartupObject>Akka.Logger.Serilog.Tests.Generator.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +19,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Akka.Logger.Serilog\Akka.Logger.Serilog.csproj" />
+    <None Update="TestFiles\**\*.*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

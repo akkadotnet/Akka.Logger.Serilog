@@ -6,6 +6,7 @@
 //-----------------------------------------------------------------------
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -16,3 +17,4 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("bf98d438-d2b2-45b7-9326-a2d0170e7a2b")]
 
+[assembly: InternalsVisibleTo("Akka.Logger.Serilog.Tests")]

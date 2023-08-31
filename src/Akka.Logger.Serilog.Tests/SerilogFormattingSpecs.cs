@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
+using Akka.Logger.Serilog.Tests.Generator;
 using FluentAssertions;
 using Serilog;
 using Xunit;
@@ -16,11 +20,11 @@ namespace Akka.Logger.Serilog.Tests
         public static readonly Config Config = 
 @"
 akka.loglevel = DEBUG
-# akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]
+akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]
+akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Logger.Serilog""
 ";
         private readonly ILogger _serilogLogger;
         private readonly TestSink _sink;
-
         private readonly ILoggingAdapter _loggingAdapter;
 
         public SerilogFormattingSpecs(ITestOutputHelper helper) : base(Config, output: helper)
@@ -28,8 +32,8 @@ akka.loglevel = DEBUG
             _sink = new TestSink(helper);
             
             _serilogLogger = new LoggerConfiguration()
-                .WriteTo.ColoredConsole()
                 .WriteTo.Sink(_sink)
+                .WriteTo.ColoredConsole()
                 .MinimumLevel.Information()
                 .CreateLogger();
             
@@ -41,33 +45,46 @@ akka.loglevel = DEBUG
             _loggingAdapter = new SerilogLoggingAdapter(Sys.EventStream, logSource, logClass);
         }
 
-        [Fact]
-        public void LogOutputRegressionTest()
+        [Theory(DisplayName = "Raw Serilog output must be compatible with previous version")]
+        [MemberData(nameof(MessageFormatDataGenerator))]
+        public async Task RawLogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {
-            const string message = "{IntArray} {DoubleArray} {StringArray} {DoubleList}";
-            const string expectedMessage = "[0, 1, 2] [0.1, 0.2, 0.3] [\"One\", \"Two\"] [1, 2, 3]";
-            var args = new object[]
-            {
-                new int[] { 0, 1, 2 },
-                new double[] { 0.1, 0.2, 0.3 },
-                new string[] { "One", "Two" },
-                new List<double> { 1, 2, 3 }
-            };
-            
             _sink.Clear();
-            AwaitCondition(() => _sink.Writes.Count == 0);
+            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
             
-            _serilogLogger.Information(message, args);
-            AwaitCondition(() => _sink.Writes.Count == 1);
+            _serilogLogger.Information(messageFormat, args);
+            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.RenderMessage().Should().Be(expectedMessage);
+            logEvent!.RenderMessage().Should().Be(expected);
+        }
+        
+        [Theory(DisplayName = "SerilogLoggingAdapter output must be compatible with previous version")]
+        [MemberData(nameof(MessageFormatDataGenerator))]
+        public async Task AdapterLogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
+        {
+            _sink.Clear();
+            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
             
-            Sys.EventStream.Subscribe(TestActor, typeof(LogEvent));
-            _loggingAdapter.Log(LogLevel.InfoLevel, message, args);
-            var akkaLogEvent = ExpectMsg<LogEvent>();
+            _loggingAdapter.Info(messageFormat, args);
+            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
-            akkaLogEvent.ToString().Should().Contain(expectedMessage);
+            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+            logEvent!.RenderMessage().Should().Contain(expected);
+        }
+
+        [Theory(DisplayName = "Default ILoggingAdapter output must be compatible with previous version")]
+        [MemberData(nameof(MessageFormatDataGenerator))]
+        public async Task LogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
+        {
+            _sink.Clear();
+            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            
+            Sys.Log.Info(messageFormat, args);
+            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+
+            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+            logEvent!.RenderMessage().Should().Contain(expected);
         }
         
         [Theory]
@@ -88,6 +105,23 @@ akka.loglevel = DEBUG
             };
 
             logWrite.Should().NotThrow<FormatException>();
+        }
+
+        public static IEnumerable<object[]> MessageFormatDataGenerator()
+        {
+            var testDataFolder = new DirectoryInfo(Path.Combine(".", "TestFiles"));
+            foreach (var fileInfo in testDataFolder.EnumerateFiles())
+            {
+                var version = Path.GetFileNameWithoutExtension(fileInfo.Name);
+                var logOutputs = File.ReadLines(fileInfo.FullName).ToArray();
+                foreach (var i in Enumerable.Range(0, TestData.Args.Length))
+                {
+                    var expected = logOutputs[i];
+                    var messageFormat = TestData.MessageFormats[i];
+                    var args = TestData.Args[i];
+                    yield return new object[] { version, expected, messageFormat, args };
+                }
+            }
         }
     }
 }
