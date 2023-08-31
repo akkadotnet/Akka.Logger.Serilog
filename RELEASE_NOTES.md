@@ -1,3 +1,8 @@
+#### 1.5.12 August 31 2023 ####
+
+* [Update Akka.NET to 1.5.12](https://github.com/akkadotnet/akka.net/releases/tag/1.5.12)
+* [Fix Serilog message output bug](https://github.com/akkadotnet/Akka.Logger.Serilog/pull/255)
+
 #### 1.5.7 May 19 2023 ####
 
 * [Update Akka.NET to 1.5.7](https://github.com/akkadotnet/akka.net/releases/tag/1.5.7)
