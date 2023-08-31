@@ -20,11 +20,12 @@ namespace Akka.Logger.Serilog.Tests
         public static readonly Config Config = 
 @"
 akka.loglevel = DEBUG
-# akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]
+akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]
+akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Logger.Serilog""
 ";
         private readonly ILogger _serilogLogger;
         private readonly TestSink _sink;
-        private ILoggingAdapter _loggingAdapter;
+        private readonly ILoggingAdapter _loggingAdapter;
 
         public SerilogFormattingSpecs(ITestOutputHelper helper) : base(Config, output: helper)
         {
@@ -44,9 +45,9 @@ akka.loglevel = DEBUG
             _loggingAdapter = new SerilogLoggingAdapter(Sys.EventStream, logSource, logClass);
         }
 
-        [Theory(DisplayName = "Serilog output must be compatible with previous version")]
+        [Theory(DisplayName = "Raw Serilog output must be compatible with previous version")]
         [MemberData(nameof(MessageFormatDataGenerator))]
-        public async Task LogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
+        public async Task RawLogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {
             _sink.Clear();
             await AwaitConditionAsync(() => _sink.Writes.Count == 0);
@@ -55,13 +56,35 @@ akka.loglevel = DEBUG
             await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.RenderMessage().Should().Be(expected);
+            logEvent!.RenderMessage().Should().Be(expected);
+        }
+        
+        [Theory(DisplayName = "SerilogLoggingAdapter output must be compatible with previous version")]
+        [MemberData(nameof(MessageFormatDataGenerator))]
+        public async Task AdapterLogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
+        {
+            _sink.Clear();
+            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
             
-            Sys.EventStream.Subscribe(TestActor, typeof(LogEvent));
-            _loggingAdapter.Log(LogLevel.InfoLevel, messageFormat, args);
-            var akkaLogEvent = ExpectMsg<LogEvent>();
+            _loggingAdapter.Info(messageFormat, args);
+            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
-            akkaLogEvent.ToString().Should().Contain(expected);
+            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+            logEvent!.RenderMessage().Should().Contain(expected);
+        }
+
+        [Theory(DisplayName = "Default ILoggingAdapter output must be compatible with previous version")]
+        [MemberData(nameof(MessageFormatDataGenerator))]
+        public async Task LogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
+        {
+            _sink.Clear();
+            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            
+            Sys.Log.Info(messageFormat, args);
+            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+
+            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+            logEvent!.RenderMessage().Should().Contain(expected);
         }
         
         [Theory]
