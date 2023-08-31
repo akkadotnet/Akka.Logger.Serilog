@@ -11,25 +11,32 @@ using FluentAssertions;
 using Serilog;
 using Xunit;
 using Xunit.Abstractions;
+using SerilogLog = Serilog.Log;
 
 namespace Akka.Logger.Serilog.Tests
 {
     public class SerilogFormattingSpecs : TestKit.Xunit2.TestKit
     {
-        public static readonly Config Config = @"akka.loglevel = DEBUG";
-        private ILogger _serilogLogger;
-
+        public static readonly Config Config = 
+@"
+akka.loglevel = DEBUG
+# akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]
+";
+        private readonly ILogger _serilogLogger;
+        private readonly TestSink _sink;
         private ILoggingAdapter _loggingAdapter;
-        private TestSink _sink;
 
         public SerilogFormattingSpecs(ITestOutputHelper helper) : base(Config, output: helper)
         {
-            _sink = new TestSink();
+            _sink = new TestSink(helper);
+            
             _serilogLogger = new LoggerConfiguration()
                 .WriteTo.Sink(_sink)
                 .WriteTo.ColoredConsole()
                 .MinimumLevel.Information()
                 .CreateLogger();
+            
+            SerilogLog.Logger = _serilogLogger;
 
             var logSource = Sys.Name;
             var logClass = typeof(ActorSystem);
