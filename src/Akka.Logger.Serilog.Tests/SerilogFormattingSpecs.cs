@@ -33,7 +33,7 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             
             _serilogLogger = new LoggerConfiguration()
                 .WriteTo.Sink(_sink)
-                .WriteTo.ColoredConsole()
+                .WriteTo.Console()
                 .MinimumLevel.Information()
                 .CreateLogger();
             
