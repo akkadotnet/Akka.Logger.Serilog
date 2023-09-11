@@ -21,7 +21,7 @@ namespace Akka.Logger.Serilog.Tests.Generator
         
             var sink = new TestSink();
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.ColoredConsole()
+                .WriteTo.Console()
                 .WriteTo.Sink(sink)
                 .MinimumLevel.Debug()
                 .CreateLogger();
