@@ -1,3 +1,7 @@
+#### 1.5.12.1 August 31 2023 ####
+
+* [Update Akka.Hosting to 1.5.12.1](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.12.1)
+
 #### 1.5.12 August 31 2023 ####
 
 * [Update Akka.NET to 1.5.12](https://github.com/akkadotnet/akka.net/releases/tag/1.5.12)
