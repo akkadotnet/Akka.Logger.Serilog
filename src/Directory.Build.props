@@ -13,7 +13,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <AkkaVersion>1.5.13</AkkaVersion>
-    <AkkaHostingVersion>1.5.12.1</AkkaHostingVersion>
+    <AkkaHostingVersion>1.5.13</AkkaHostingVersion>
     <NetCoreTestVersion>netcoreapp3.1</NetCoreTestVersion>
     <NetFrameworkTestVersion>net471</NetFrameworkTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
