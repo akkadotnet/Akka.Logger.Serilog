@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Serilog" />
-    <PackageReference Include="Akka" />
+    <PackageReference Include="Akka.Hosting" />
   </ItemGroup>
 
   <ItemGroup>
