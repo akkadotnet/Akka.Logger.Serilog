@@ -22,6 +22,11 @@ namespace Akka.Logger.Serilog.Tests
         public static readonly Config Config = @"akka.loglevel = DEBUG
                                                  akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]";
         private readonly ILoggingAdapter _loggingAdapter;
+        
+        /// <summary>
+        /// Used to test that https://github.com/akkadotnet/Akka.Logger.Serilog/issues/284 is fixed
+        /// </summary>
+        private readonly ILoggingAdapter _defaultLoggingAdapter;
         private readonly TestSink _sink = new TestSink();
 
         public ForContextSpecs(ITestOutputHelper helper) : base(Config, output: helper)
@@ -35,6 +40,63 @@ namespace Akka.Logger.Serilog.Tests
             var logClass = typeof(ActorSystem);
 
             _loggingAdapter = Sys.GetLogger<SerilogLoggingAdapter>(logSource, logClass);
+            _defaultLoggingAdapter = Sys.Log;
+        }
+        
+        /// <summary>
+        /// Used to test that https://github.com/akkadotnet/Akka.Logger.Serilog/issues/284 is fixed
+        /// </summary>
+        [Fact]
+        public void ShouldLogMessageWithContextPropertyDefaultLogger()
+        {
+	        var context = _defaultLoggingAdapter
+		        .ForContext("Address", "No. 4 Privet Drive")
+		        .ForContext("Town", "Little Whinging")
+		        .ForContext("County", "Surrey")
+		        .ForContext("Country", "England");
+
+	        _sink.Clear();
+	        AwaitCondition(() => _sink.Writes.Count == 0);
+
+	        context.Info("Hi {Person}", "Harry Potter");
+	        AwaitCondition(() => _sink.Writes.Count == 1);
+
+	        _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+	        logEvent.Level.Should().Be(LogEventLevel.Information);
+	        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+	        logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
+	        logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
+	        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+	        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+	        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+	        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+        }
+
+        /// <summary>
+        /// Used to test that https://github.com/akkadotnet/Akka.Logger.Serilog/issues/284 is fixed
+        /// </summary>
+        [Fact]
+        public void ShouldLogMessageWithContextPropertyAndPropertyEnricherDefaultLogger()
+        {
+	        var context = _defaultLoggingAdapter
+		        .ForContext("Address", "No. 4 Privet Drive")
+		        .ForContext("Town", "Little Whinging");
+
+	        _sink.Clear();
+	        AwaitCondition(() => _sink.Writes.Count == 0);
+
+	        context.Info("Hi {Person}", "Harry Potter", new PropertyEnricher("County", "Surrey"), new PropertyEnricher("Country", "England"));
+	        AwaitCondition(() => _sink.Writes.Count == 1);
+
+	        _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
+	        logEvent.Level.Should().Be(LogEventLevel.Information);
+	        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+	        logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
+	        logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
+	        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+	        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+	        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+	        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
         }
 
         [Fact]

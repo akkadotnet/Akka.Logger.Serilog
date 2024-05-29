@@ -15,7 +15,18 @@ namespace Akka.Logger.Serilog
         /// <param name="destructureObjects">If true, the value will be serialized as a structured object if possible; if false, the object will be recorded as a scalar or simple array.</param>
         public static ILoggingAdapter ForContext(this ILoggingAdapter adapter, string propertyName, object value, bool destructureObjects = false)
         {
-            return adapter is not SerilogLoggingAdapter customAdapter ? adapter : customAdapter.SetContextProperty(propertyName, value, destructureObjects);
+            if(adapter is SerilogLoggingAdapter customAdapter)
+                return customAdapter.SetContextProperty(propertyName, value, destructureObjects);
+
+            if (adapter is BusLogging defaultAkkaAdapter)
+            {
+                var enrichedAdapter = new SerilogLoggingAdapter(defaultAkkaAdapter.Bus, defaultAkkaAdapter.LogSource, defaultAkkaAdapter.LogClass);
+                return enrichedAdapter.SetContextProperty(propertyName, value, destructureObjects);
+            }
+            
+            // log a warning if the adapter is not a SerilogLoggingAdapter or BusLogging
+            adapter.Warning($"Cannot enrich log event with property {propertyName} because the adapter is not a {typeof(SerilogLoggingAdapter)} or {typeof(BusLogging)}.");
+            return adapter;
         }
 
         /// <summary>
