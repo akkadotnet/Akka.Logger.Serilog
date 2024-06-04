@@ -25,6 +25,9 @@ namespace Akka.Logger.Serilog
         }
     }
     
+    /// <summary>
+    /// Serilog logging adapter.
+    /// </summary>
     public class SerilogLoggingAdapter : LoggingAdapterBase
     {
         private readonly LoggingBus _bus;

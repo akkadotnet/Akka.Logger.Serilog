@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>$(NetStandardLibVersion)</TargetFramework>
+    <TargetFrameworks>$(NetStandardLibVersion);net6.0</TargetFrameworks>
     <Description>Serilog logging adapter for Akka.NET.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageIcon>icon.png</PackageIcon>
