@@ -24,6 +24,7 @@ steps:
 - task: UseDotNet@2
   displayName: 'Use .NET SDK'
   inputs:
+    packageType: sdk
     useGlobalJson: true
 - task: BatchScript@1
   displayName: 'FAKE Build'
