@@ -59,7 +59,7 @@ This log entry will have "County" and "Country" properties added to it.
 
 ### Automatically Convert `ILoggingAdapter` into `SerilogLoggingAdapter`
 
-As of Akka.Logger.Serilog v1.5.22, you can now do the following:
+As of Akka.Logger.Serilog v1.5.25, you can now do the following:
 
 ```csharp
 var log = Context.GetLogger()
