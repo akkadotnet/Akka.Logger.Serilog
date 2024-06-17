@@ -11,8 +11,8 @@
     <LangVersion>10</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <AkkaVersion>1.5.22</AkkaVersion>
-    <AkkaHostingVersion>1.5.13</AkkaHostingVersion>
+    <AkkaVersion>1.5.25</AkkaVersion>
+    <AkkaHostingVersion>1.5.24</AkkaHostingVersion>
     <NetCoreTestVersion>net8.0</NetCoreTestVersion>
     <NetFrameworkTestVersion>net471</NetFrameworkTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
