@@ -61,7 +61,7 @@ namespace Akka.Logger.Serilog.Tests
             var semanticLogger = Sys.ActorOf(Props.Create(() => new LoggerActor()));
             Sys.EventStream.Subscribe(TestActor, typeof(Info));
             Cluster.Cluster.Get(Sys).Subscribe(upProbe, ClusterEvent.SubscriptionInitialStateMode.InitialStateAsEvents, typeof(ClusterEvent.MemberUp));
-            upProbe.FishForMessage(f => f is ClusterEvent.MemberUp);
+            await upProbe.FishForMessageAsync(f => f is ClusterEvent.MemberUp);
             Sys.Log.Info("Foo");
             Sys.Log.Info("Foo");
             semanticLogger.Tell("hit");
