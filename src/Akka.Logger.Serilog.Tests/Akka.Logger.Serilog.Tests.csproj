@@ -1,13 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>    
+  <PropertyGroup>
     <TargetFrameworks>$(NetFrameworkTestVersion);$(NetCoreTestVersion)</TargetFrameworks>
-    <OutputType>Exe</OutputType>
-    <StartupObject>Akka.Logger.Serilog.Tests.Generator.Program</StartupObject>
+    <!-- Temporarily commented out to enable test discovery -->
+    <!--<OutputType>Exe</OutputType>
+    <StartupObject>Akka.Logger.Serilog.Tests.Generator.Program</StartupObject>-->
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Akka.TestKit.Xunit2" />
     <PackageReference Include="Akka.Cluster" />
     <PackageReference Include="FluentAssertions" />
