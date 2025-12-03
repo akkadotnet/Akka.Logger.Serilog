@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
@@ -18,45 +16,58 @@ namespace Akka.Logger.Serilog.Tests
     /// Verifies that structured properties from log message templates are
     /// accessible in Serilog's log events.
     /// </summary>
-    public class SemanticLoggingSpecs : TestKit.Xunit2.TestKit
+    public class SemanticLoggingSpecs : IAsyncLifetime
     {
         public static readonly Config Config =
 @"akka.loglevel = DEBUG
 akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]
 akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Logger.Serilog""";
 
+        private readonly ITestOutputHelper _helper;
         private readonly TestSink _sink;
-        private readonly ILoggingAdapter _loggingAdapter;
+        
+        private TestKit.Xunit2.TestKit _testKit;
+        private ILoggingAdapter _loggingAdapter;
 
-        public SemanticLoggingSpecs(ITestOutputHelper helper) : base(Config, output: helper)
+        public SemanticLoggingSpecs(ITestOutputHelper helper)
         {
+            _helper = helper;
             _sink = new TestSink(helper);
 
             global::Serilog.Log.Logger = new LoggerConfiguration()
                 .WriteTo.Sink(_sink)
                 .MinimumLevel.Debug()
                 .CreateLogger();
-
-            var logSource = Sys.Name;
-            var logClass = typeof(ActorSystem);
-
-            _loggingAdapter = new SerilogLoggingAdapter(Sys.EventStream, logSource, logClass);
-            
-            AwaitCondition(() =>
-            {
-                _loggingAdapter.Warning("hi");
-                return _sink.Writes.Count > 0;
-            }, TimeSpan.FromSeconds(3), TimeSpan.FromMilliseconds(200));
         }
 
+        public Task InitializeAsync()
+        {
+            var sys = ActorSystem.Create("TestActorSystem", Config);
+            _testKit = new TestKit.Xunit2.TestKit(sys, _helper);
+            
+            var logSource = sys.Name;
+            var logClass = typeof(ActorSystem);
+
+            _loggingAdapter = new SerilogLoggingAdapter(sys.EventStream, logSource, logClass);
+            _loggingAdapter = sys.Log;
+            
+            return Task.CompletedTask;
+        }
+
+        public Task DisposeAsync()
+        {
+            _testKit.Shutdown();
+            return Task.CompletedTask;
+        }
+        
         [Fact(DisplayName = "Should extract named template properties for Serilog")]
         public async Task NamedTemplatePropertiesTest()
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 0);
 
             _loggingAdapter.Info("User {UserId} with email {Email} logged in", 12345, "user@example.com");
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
             logEvent.Properties.Should().ContainKey("UserId");
@@ -69,10 +80,10 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task PositionalTemplatePropertiesTest()
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 0);
 
             _loggingAdapter.Info("User {0} logged in from {1}", "Bob", "192.168.1.1");
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
             logEvent.Properties.Should().ContainKey("0");
@@ -85,11 +96,11 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task MultipleNamedPropertiesTest()
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 0);
 
             _loggingAdapter.Info("Order {OrderId} for customer {CustomerId}: {Amount} {Currency}",
                 "ORD-001", "CUST-456", 99.99, "USD");
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
             logEvent.Properties.Should().ContainKeys("OrderId", "CustomerId", "Amount", "Currency");
@@ -103,10 +114,10 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task AkkaMetadataAndSemanticPropertiesTest()
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 0);
 
             _loggingAdapter.Info("User {UserId} action", 999);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
 
@@ -124,11 +135,11 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task DestructuringOperatorTest()
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 0);
 
             var user = new { Name = "Alice", Age = 30, Role = "Admin" };
             _loggingAdapter.Info("Processing user {@User}", user);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
 
@@ -149,11 +160,11 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task StringificationOperatorTest()
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 0);
 
             var exception = new InvalidOperationException("Test error");
             _loggingAdapter.Info("Error occurred: {$Exception}", exception);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
 
@@ -169,10 +180,10 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task FormatSpecifiersInTemplatesTest()
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 0);
 
             _loggingAdapter.Info("Total amount: {Amount:N2}", 1234.5678);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
 
@@ -187,10 +198,10 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task NoPropertiesTest()
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 0);
 
             _loggingAdapter.Info("No template properties here");
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
 
@@ -207,11 +218,11 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task ForContextWithSemanticLoggingTest()
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 0);
 
             var contextLogger = _loggingAdapter.ForContext("TenantId", "TENANT-123");
             contextLogger.Info("User {UserId} performed action", 456);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
+            await _testKit.AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
             _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
 
