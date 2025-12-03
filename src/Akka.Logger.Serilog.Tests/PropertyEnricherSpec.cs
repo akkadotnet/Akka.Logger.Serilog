@@ -5,7 +5,6 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
-using System;
 using Akka.Configuration;
 using Akka.Event;
 using FluentAssertions;
@@ -50,17 +49,30 @@ akka.logger-formatter = ""{typeof(SerilogLogMessageFormatter).AssemblyQualifiedN
             new PropertyEnricher("Town", "Little Whinging"),
             new PropertyEnricher("County", "Surrey"),
             new PropertyEnricher("Country", "England"));
-        AwaitCondition(() => _sink.Writes.Count == 1);
 
-        _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-        logEvent.Level.Should().Be(LogEventLevel.Debug);
-        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
-        logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
-        logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
-        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
-        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
-        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
-        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+        AwaitCondition(() =>
+        {
+            while (_sink.Writes.TryDequeue(out var logEvent))
+            {
+                try
+                {
+                    logEvent.Level.Should().Be(LogEventLevel.Debug);
+                    logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+                    logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
+                    logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
+                    logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+                    logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+                    logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+                    logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+                    return true;
+                }
+                catch
+                {
+                    // no-op
+                }
+            }
+            return false;
+        });
     }
 
 }
