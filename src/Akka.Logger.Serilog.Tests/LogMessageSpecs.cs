@@ -20,6 +20,7 @@ namespace Akka.Logger.Serilog.Tests
         private readonly ITestOutputHelper _helper;
         private readonly TestSink _sink;
         
+        private ActorSystem _sys;
         private TestKit.Xunit2.TestKit _testKit;
         private ILoggingAdapter _loggingAdapter;
 
@@ -36,17 +37,17 @@ namespace Akka.Logger.Serilog.Tests
         
         public Task InitializeAsync()
         {
-            var sys = ActorSystem.Create("TestActorSystem", Config);
-            _testKit = new TestKit.Xunit2.TestKit(sys, _helper);
-            _loggingAdapter = sys.Log;
+            _sys = ActorSystem.Create("TestActorSystem", Config);
+            _testKit = new TestKit.Xunit2.TestKit(_sys, _helper);
+            _loggingAdapter = _sys.Log;
             
             return Task.CompletedTask;
         }
 
-        public Task DisposeAsync()
+        public async Task DisposeAsync()
         {
             _testKit.Shutdown();
-            return Task.CompletedTask;
+            await _sys.Terminate();
         }
         
         [Fact]

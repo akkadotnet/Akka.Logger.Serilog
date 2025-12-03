@@ -26,6 +26,7 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         private readonly ITestOutputHelper _helper;
         private readonly TestSink _sink;
         
+        private ActorSystem _sys;
         private TestKit.Xunit2.TestKit _testKit;
         private ILoggingAdapter _loggingAdapter;
 
@@ -42,22 +43,21 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
 
         public Task InitializeAsync()
         {
-            var sys = ActorSystem.Create("TestActorSystem", Config);
-            _testKit = new TestKit.Xunit2.TestKit(sys, _helper);
+            _sys = ActorSystem.Create("TestActorSystem", Config);
+            _testKit = new TestKit.Xunit2.TestKit(_sys, _helper);
             
-            var logSource = sys.Name;
+            var logSource = _sys.Name;
             var logClass = typeof(ActorSystem);
 
-            _loggingAdapter = new SerilogLoggingAdapter(sys.EventStream, logSource, logClass);
-            _loggingAdapter = sys.Log;
+            _loggingAdapter = new SerilogLoggingAdapter(_sys.EventStream, logSource, logClass);
             
             return Task.CompletedTask;
         }
 
-        public Task DisposeAsync()
+        public async Task DisposeAsync()
         {
             _testKit.Shutdown();
-            return Task.CompletedTask;
+            await _sys.Terminate();
         }
         
         [Fact(DisplayName = "Should extract named template properties for Serilog")]
