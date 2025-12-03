@@ -41,6 +41,12 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             var logClass = typeof(ActorSystem);
 
             _loggingAdapter = new SerilogLoggingAdapter(Sys.EventStream, logSource, logClass);
+            
+            AwaitCondition(() =>
+            {
+                _loggingAdapter.Warning("hi");
+                return _sink.Writes.Count > 0;
+            }, TimeSpan.FromSeconds(3), TimeSpan.FromMilliseconds(200));
         }
 
         [Fact(DisplayName = "Should extract named template properties for Serilog")]

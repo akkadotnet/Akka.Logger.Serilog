@@ -3,6 +3,7 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using Serilog;
 using Serilog.Core.Enrichers;
 using Serilog.Events;
@@ -28,6 +29,12 @@ namespace Akka.Logger.Serilog.Tests
                 .MinimumLevel.Debug()
                 .CreateLogger();
             _loggingAdapter = Sys.Log;
+            
+            AwaitCondition(() =>
+            {
+                _loggingAdapter.Warning("hi");
+                return _sink.Writes.Count > 0;
+            }, 3.Seconds(), 200.Milliseconds());
         }
 
         [Fact]
