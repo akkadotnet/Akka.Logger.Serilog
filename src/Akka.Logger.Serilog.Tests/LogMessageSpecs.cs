@@ -9,12 +9,13 @@ using Serilog.Core.Enrichers;
 using Serilog.Events;
 using Xunit;
 using Xunit.Abstractions;
+using LogEvent = Serilog.Events.LogEvent;
 
 namespace Akka.Logger.Serilog.Tests
 {
     public class LogMessageSpecs: IAsyncLifetime
     {
-        public static readonly Config Config = @"akka.loglevel = DEBUG
+        private static readonly Config Config = @"akka.loglevel = DEBUG
                                                  akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]";
 
         private readonly ITestOutputHelper _helper;
@@ -29,7 +30,7 @@ namespace Akka.Logger.Serilog.Tests
             _helper = helper;
             _sink = new TestSink(helper);
             
-            global::Serilog.Log.Logger = new LoggerConfiguration()
+            Log.Logger = new LoggerConfiguration()
                 .WriteTo.Sink(_sink)
                 .MinimumLevel.Debug()
                 .CreateLogger();
@@ -59,11 +60,11 @@ namespace Akka.Logger.Serilog.Tests
             _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
 
             context.Debug("hi");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Debug);
-            logEvent.RenderMessage().Should().Contain("hi");
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Debug
+                                            && logEvent.RenderMessage() == "hi")
+            );
         }
 
         [Fact]
@@ -79,16 +80,27 @@ namespace Akka.Logger.Serilog.Tests
                 new PropertyEnricher("Town", "Little Whinging"),
                 new PropertyEnricher("County", "Surrey"),
                 new PropertyEnricher("Country", "England"));
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
-
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Debug);
-            logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
-            logEvent.Properties.Should().ContainKeys("Address", "Town", "County", "Country");
-            logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
-            logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
-            logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
-            logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+            
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent =>
+                {
+                    try
+                    {
+                        logEvent.Level.Should().Be(LogEventLevel.Debug);
+                        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+                        logEvent.Properties.Should().ContainKeys("Address", "Town", "County", "Country");
+                        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+                        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+                        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+                        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                })
+            );
         }
 
         [Fact]
@@ -100,11 +112,11 @@ namespace Akka.Logger.Serilog.Tests
             _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
 
             context.Debug("hi {0}", "test");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Debug);
-            logEvent.RenderMessage().Should().Contain("hi \"test\"");
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Debug
+                                            && logEvent.RenderMessage() == "hi \"test\"")
+            );
         }
 
         [Fact]
@@ -117,11 +129,12 @@ namespace Akka.Logger.Serilog.Tests
 
             var exception = new Exception("BOOM!!!");
             context.Debug(exception, "hi");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Debug);
-            logEvent.Exception.Should().Be(exception);
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Debug
+                                            && logEvent.Exception == exception
+                                            && logEvent.RenderMessage() == "hi")
+            );
         }
 
         [Fact]
@@ -134,11 +147,12 @@ namespace Akka.Logger.Serilog.Tests
 
             var exception = new Exception("BOOM!!!");
             context.Debug(exception, "hi {0}", "test");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Debug);
-            logEvent.Exception.Should().Be(exception);
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Debug
+                                            && logEvent.Exception == exception
+                                            && logEvent.RenderMessage() == "hi \"test\"")
+            );
         }
         
         [Fact]
@@ -150,11 +164,11 @@ namespace Akka.Logger.Serilog.Tests
             _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
 
             context.Info("hi");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Information);
-            logEvent.RenderMessage().Should().Contain("hi");
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Information
+                                            && logEvent.RenderMessage() == "hi")
+            );
         }
 
         [Fact]
@@ -166,11 +180,11 @@ namespace Akka.Logger.Serilog.Tests
             _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
 
             context.Info("hi {0}", "test");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Information);
-            logEvent.RenderMessage().Should().Contain("hi \"test\"");
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Information
+                                            && logEvent.RenderMessage() == "hi \"test\"")
+            );
         }
 
         [Fact]
@@ -183,11 +197,12 @@ namespace Akka.Logger.Serilog.Tests
 
             var exception = new Exception("BOOM!!!");
             context.Info(exception, "hi");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Information);
-            logEvent.Exception.Should().Be(exception);
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Information
+                                            && logEvent.Exception == exception
+                                            && logEvent.RenderMessage() == "hi")
+            );
         }
 
         [Fact]
@@ -200,11 +215,12 @@ namespace Akka.Logger.Serilog.Tests
 
             var exception = new Exception("BOOM!!!");
             context.Info(exception, "hi {0}", "test");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Information);
-            logEvent.Exception.Should().Be(exception);
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Information
+                                            && logEvent.Exception == exception
+                                            && logEvent.RenderMessage() == "hi \"test\"")
+            );
         }
         
         [Fact]
@@ -216,11 +232,11 @@ namespace Akka.Logger.Serilog.Tests
             _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
 
             context.Warning("hi");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Warning);
-            logEvent.RenderMessage().Should().Contain("hi");
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Warning
+                                            && logEvent.RenderMessage() == "hi")
+            );
         }
 
         [Fact]
@@ -232,11 +248,11 @@ namespace Akka.Logger.Serilog.Tests
             _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
 
             context.Warning("hi {0}", "test");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Warning);
-            logEvent.RenderMessage().Should().Contain("hi \"test\"");
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Warning
+                                            && logEvent.RenderMessage() == "hi \"test\"")
+            );
         }
 
         [Fact]
@@ -249,11 +265,12 @@ namespace Akka.Logger.Serilog.Tests
 
             var exception = new Exception("BOOM!!!");
             context.Warning(exception, "hi");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Warning);
-            logEvent.Exception.Should().Be(exception);
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Warning
+                                            && logEvent.Exception == exception
+                                            && logEvent.RenderMessage() == "hi")
+            );
         }
 
         [Fact]
@@ -266,11 +283,12 @@ namespace Akka.Logger.Serilog.Tests
 
             var exception = new Exception("BOOM!!!");
             context.Warning(exception, "hi {0}", "test");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Warning);
-            logEvent.Exception.Should().Be(exception);
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Warning
+                                            && logEvent.Exception == exception
+                                            && logEvent.RenderMessage() == "hi \"test\"")
+            );
         }
         
         [Fact]
@@ -282,11 +300,11 @@ namespace Akka.Logger.Serilog.Tests
             _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
 
             context.Error("hi");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Error);
-            logEvent.RenderMessage().Should().Contain("hi");
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Error
+                                            && logEvent.RenderMessage() == "hi")
+            );
         }
 
         [Fact]
@@ -298,11 +316,11 @@ namespace Akka.Logger.Serilog.Tests
             _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
 
             context.Error("hi {0}", "test");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Error);
-            logEvent.RenderMessage().Should().Contain("hi \"test\"");
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Error
+                                            && logEvent.RenderMessage() == "hi \"test\"")
+            );
         }
 
         [Fact]
@@ -315,11 +333,12 @@ namespace Akka.Logger.Serilog.Tests
 
             var exception = new Exception("BOOM!!!");
             context.Error(exception, "hi");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Error);
-            logEvent.Exception.Should().Be(exception);
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Error
+                                            && logEvent.Exception == exception
+                                            && logEvent.RenderMessage() == "hi")
+            );
         }
 
         [Fact]
@@ -332,11 +351,22 @@ namespace Akka.Logger.Serilog.Tests
 
             var exception = new Exception("BOOM!!!");
             context.Error(exception, "hi {0}", "test");
-            _testKit.AwaitCondition(() => _sink.Writes.Count > 0);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Error);
-            logEvent.Exception.Should().Be(exception);
+            _testKit.AwaitCondition(() =>
+                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Error
+                                            && logEvent.Exception == exception
+                                            && logEvent.RenderMessage() == "hi \"test\"")
+            );
+        }
+
+        private bool AssertCondition(Func<LogEvent, bool> condition)
+        {
+            while (_sink.Writes.TryDequeue(out var logEvent))
+            {
+                if (condition(logEvent))
+                    return true;
+            }
+            return false;
         }
     }
 }
