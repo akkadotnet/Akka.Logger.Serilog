@@ -4,8 +4,6 @@ using Serilog.Events;
 using Xunit;
 using Xunit.Abstractions;
 
-[assembly: CollectionBehavior(DisableTestParallelization = true)]
-
 namespace Akka.Logger.Serilog.Tests
 {
     /// <inheritdoc />
