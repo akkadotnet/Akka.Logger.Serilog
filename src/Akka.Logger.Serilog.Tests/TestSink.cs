@@ -12,7 +12,7 @@ namespace Akka.Logger.Serilog.Tests
     /// </summary>
     public sealed class TestSink : ILogEventSink
     {
-        public ConcurrentQueue<global::Serilog.Events.LogEvent> Writes { get; private set; } = new ConcurrentQueue<global::Serilog.Events.LogEvent>();
+        public ConcurrentQueue<LogEvent> Writes { get; } = new ();
 
         private readonly ITestOutputHelper _output;
         private int _count;
@@ -31,10 +31,11 @@ namespace Akka.Logger.Serilog.Tests
         /// </summary>
         public void Clear()
         {
-            Writes = new ConcurrentQueue<LogEvent>();
+            while (Writes.TryDequeue(out _))
+            { }
         }
 
-        public void Emit(global::Serilog.Events.LogEvent logEvent)
+        public void Emit(LogEvent logEvent)
         {
             _count++;
             _output?.WriteLine($"[{nameof(TestSink)}][{_count}]: {logEvent.RenderMessage()}");
