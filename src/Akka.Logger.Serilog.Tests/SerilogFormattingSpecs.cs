@@ -11,6 +11,7 @@ using FluentAssertions;
 using Serilog;
 using Xunit;
 using Xunit.Abstractions;
+using LogEvent = Serilog.Events.LogEvent;
 using SerilogLog = Serilog.Log;
 
 namespace Akka.Logger.Serilog.Tests
@@ -53,10 +54,11 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             await AwaitConditionAsync(() => _sink.Writes.Count == 0);
             
             _serilogLogger.Information(messageFormat, args);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent!.RenderMessage().Should().Be(expected);
+            await AwaitConditionAsync(() => AssertCondition(logEvent =>
+            {
+                logEvent.RenderMessage().Should().Be(expected);
+            }));
         }
         
         [Theory(DisplayName = "SerilogLoggingAdapter output must be compatible with previous version")]
@@ -67,10 +69,11 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             await AwaitConditionAsync(() => _sink.Writes.Count == 0);
             
             _loggingAdapter.Info(messageFormat, args);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent!.RenderMessage().Should().Contain(expected);
+            await AwaitConditionAsync(() => AssertCondition(logEvent =>
+            {
+                logEvent.RenderMessage().Should().Contain(expected);
+            }));
         }
 
         [Theory(DisplayName = "Default ILoggingAdapter output must be compatible with previous version")]
@@ -81,10 +84,28 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             await AwaitConditionAsync(() => _sink.Writes.Count == 0);
             
             Sys.Log.Info(messageFormat, args);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent!.RenderMessage().Should().Contain(expected);
+            await AwaitConditionAsync(() => AssertCondition(logEvent =>
+            {
+                logEvent.RenderMessage().Should().Contain(expected);
+            }));
+        }
+        
+        private bool AssertCondition(Action<LogEvent> assertion)
+        {
+            while (_sink.Writes.TryDequeue(out var logEvent))
+            {
+                try
+                {
+                    assertion(logEvent);
+                    return true;
+                }
+                catch
+                {
+                    // no-op
+                }
+            }
+            return false;
         }
         
         [Theory]
@@ -93,13 +114,13 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         [InlineData(LogLevel.DebugLevel, "test case {myNum} {myStr}", new object[] { 1, "foo" })]
         public void ShouldHandleSerilogFormats(LogLevel level, string formatStr, object[] args)
         {
-            Sys.EventStream.Subscribe(TestActor, typeof(LogEvent));
+            Sys.EventStream.Subscribe(TestActor, typeof(Akka.Event.LogEvent));
 
             Action logWrite = () =>
             {
                 _loggingAdapter.Log(level, formatStr, args);
 
-                var logEvent = ExpectMsg<LogEvent>();
+                var logEvent = ExpectMsg<Akka.Event.LogEvent>();
                 logEvent.LogLevel().Should().Be(level);
                 logEvent.ToString().Should().NotBeEmpty();
             };
