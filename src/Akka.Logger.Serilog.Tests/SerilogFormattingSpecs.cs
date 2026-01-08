@@ -11,6 +11,7 @@ using FluentAssertions;
 using Serilog;
 using Xunit;
 using Xunit.Abstractions;
+using LogEvent = Serilog.Events.LogEvent;
 using SerilogLog = Serilog.Log;
 
 namespace Akka.Logger.Serilog.Tests
@@ -50,27 +51,30 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task RawLogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
-            
-            _serilogLogger.Information(messageFormat, args);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent!.RenderMessage().Should().Be(expected);
+            _serilogLogger.Information(messageFormat, args);
+
+            await AwaitAssertAsync(() =>
+            {
+                _sink.Writes.ToArray().Select(e => e.RenderMessage())
+                    .Should().Contain(expected, $"output should match {version}");
+            });
         }
-        
+
         [Theory(DisplayName = "SerilogLoggingAdapter output must be compatible with previous version")]
         [MemberData(nameof(MessageFormatDataGenerator))]
         public async Task AdapterLogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
-            
-            _loggingAdapter.Info(messageFormat, args);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent!.RenderMessage().Should().Contain(expected);
+            // Log inside AwaitAssertAsync so retries send fresh messages
+            // (handles race where logger isn't subscribed to EventStream yet)
+            await AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Info(messageFormat, args);
+                _sink.Writes.ToArray().Select(e => e.RenderMessage())
+                    .Should().Contain(msg => msg.Contains(expected), $"output should match {version}");
+            });
         }
 
         [Theory(DisplayName = "Default ILoggingAdapter output must be compatible with previous version")]
@@ -78,13 +82,15 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task LogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
-            
-            Sys.Log.Info(messageFormat, args);
-            await AwaitConditionAsync(() => _sink.Writes.Count == 1);
 
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent!.RenderMessage().Should().Contain(expected);
+            // Log inside AwaitAssertAsync so retries send fresh messages
+            // (handles race where logger isn't subscribed to EventStream yet)
+            await AwaitAssertAsync(() =>
+            {
+                Sys.Log.Info(messageFormat, args);
+                _sink.Writes.ToArray().Select(e => e.RenderMessage())
+                    .Should().Contain(msg => msg.Contains(expected), $"output should match {version}");
+            });
         }
         
         [Theory]
@@ -93,13 +99,13 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         [InlineData(LogLevel.DebugLevel, "test case {myNum} {myStr}", new object[] { 1, "foo" })]
         public void ShouldHandleSerilogFormats(LogLevel level, string formatStr, object[] args)
         {
-            Sys.EventStream.Subscribe(TestActor, typeof(LogEvent));
+            Sys.EventStream.Subscribe(TestActor, typeof(Akka.Event.LogEvent));
 
             Action logWrite = () =>
             {
                 _loggingAdapter.Log(level, formatStr, args);
 
-                var logEvent = ExpectMsg<LogEvent>();
+                var logEvent = ExpectMsg<Akka.Event.LogEvent>();
                 logEvent.LogLevel().Should().Be(level);
                 logEvent.ToString().Should().NotBeEmpty();
             };

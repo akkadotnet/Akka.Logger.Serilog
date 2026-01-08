@@ -27,24 +27,30 @@ namespace Akka.Logger.Serilog
         private readonly ILoggingAdapter _log = Logging.GetLogger(Context.System.EventStream, "SerilogLogger");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string GetFormat(object message)
+        private static string GetFormat(LogEvent logEvent)
         {
-            // Unwrap SerilogPayload
+            // Unwrap SerilogPayload if present (Serilog-specific wrapper for context enrichers)
+            var message = logEvent.Message;
             if (message is SerilogPayload payload)
                 message = payload.Message;
-            
-            return message is LogMessage logMessage ? logMessage.Format : "{Message:l}";
+
+            // Use semantic logging pattern: check if LogMessage and extract template
+            return message is LogMessage logMessage ? logMessage.Format : message?.ToString() ?? "{Message:l}";
         }
 
-        private static object[] GetArgs(object message)
+        private static object[] GetArgs(LogEvent logEvent)
         {
-            // Unwrap SerilogPayload
+            // Unwrap SerilogPayload if present (Serilog-specific wrapper for context enrichers)
+            var message = logEvent.Message;
             if (message is SerilogPayload payload)
                 message = payload.Message;
-            
-            return message is LogMessage logMessage 
-                ? logMessage.Parameters().Where(a => a is not PropertyEnricher).ToArray() 
+
+            // Use semantic logging pattern: extract parameters and filter PropertyEnricher objects
+            var parameters = message is LogMessage logMessage
+                ? logMessage.Parameters()
                 : new[] { message };
+
+            return parameters.Where(a => a is not PropertyEnricher).ToArray();
         }
 
         private static ILogger GetLogger(LogEvent logEvent) {
@@ -75,21 +81,21 @@ namespace Akka.Logger.Serilog
         }
 
         private static void Handle(Error logEvent) {
-            GetLogger(logEvent).Error(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+            GetLogger(logEvent).Error(logEvent.Cause, GetFormat(logEvent), GetArgs(logEvent));
         }
 
         private static void Handle(Warning logEvent) {
-            GetLogger(logEvent).Warning(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+            GetLogger(logEvent).Warning(logEvent.Cause, GetFormat(logEvent), GetArgs(logEvent));
         }
 
         private static void Handle(Info logEvent)
         {
-            GetLogger(logEvent).Information(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+            GetLogger(logEvent).Information(logEvent.Cause, GetFormat(logEvent), GetArgs(logEvent));
         }
 
         private static void Handle(Debug logEvent)
         {
-            GetLogger(logEvent).Debug(logEvent.Cause, GetFormat(logEvent.Message), GetArgs(logEvent.Message));
+            GetLogger(logEvent).Debug(logEvent.Cause, GetFormat(logEvent), GetArgs(logEvent));
         }
 
         /// <summary>
