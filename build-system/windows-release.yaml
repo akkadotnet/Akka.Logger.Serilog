@@ -3,7 +3,6 @@
 
 pool:
   vmImage: windows-latest
-  demands: Cmd
 
 trigger:
   branches:
@@ -45,3 +44,4 @@ steps:
     releaseNotesFile: 'RELEASE_NOTES.md'
     assets: |
      bin\nuget\*.nupkg
+

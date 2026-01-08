@@ -1,3 +1,17 @@
+#### 1.5.57 January 8 2026 ####
+
+* [Update Akka.NET to 1.5.57](https://github.com/akkadotnet/akka.net/releases/tag/1.5.57)
+* [Add semantic logging support for Akka.NET 1.5.56+](https://github.com/akkadotnet/Akka.Logger.Serilog/pull/294)
+
+This release adds full semantic logging support, enabling Serilog to receive properly structured message templates and parameters instead of pre-formatted strings. This enhancement leverages Akka.NET's semantic logging APIs introduced in version 1.5.56, enabling richer structured logging capabilities.
+
+**New Features:**
+- **Semantic Logging**: Serilog now receives message templates with named and positional parameters for true structured logging
+- **Enhanced Template Support**: Full support for Serilog destructuring (`@`), stringification (`$`), and format specifiers (e.g., `:N2`)
+- **ForContext Integration**: Semantic logging works seamlessly with `ForContext()` for enriched log contexts
+- **Akka Metadata Preservation**: All Akka.NET metadata (timestamp, log level, thread, logger name) is preserved in structured logs
+- **Backwards Compatible**: Fully compatible with older Akka.NET versions through `LogMessage` type checking
+
 #### 1.5.25 June 17 2024 ####
 
 * [Update Akka.Hosting to 1.5.25](https://github.com/akkadotnet/akka.net/releases/tag/1.5.25)
