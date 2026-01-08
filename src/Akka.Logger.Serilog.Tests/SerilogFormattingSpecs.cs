@@ -51,29 +51,30 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task RawLogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
-            
+
             _serilogLogger.Information(messageFormat, args);
 
-            await AwaitConditionAsync(() => AssertCondition(logEvent =>
+            await AwaitAssertAsync(() =>
             {
-                logEvent.RenderMessage().Should().Be(expected);
-            }));
+                _sink.Writes.ToArray().Select(e => e.RenderMessage())
+                    .Should().Contain(expected, $"output should match {version}");
+            });
         }
-        
+
         [Theory(DisplayName = "SerilogLoggingAdapter output must be compatible with previous version")]
         [MemberData(nameof(MessageFormatDataGenerator))]
         public async Task AdapterLogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
-            
-            _loggingAdapter.Info(messageFormat, args);
 
-            await AwaitConditionAsync(() => AssertCondition(logEvent =>
+            // Log inside AwaitAssertAsync so retries send fresh messages
+            // (handles race where logger isn't subscribed to EventStream yet)
+            await AwaitAssertAsync(() =>
             {
-                logEvent.RenderMessage().Should().Contain(expected);
-            }));
+                _loggingAdapter.Info(messageFormat, args);
+                _sink.Writes.ToArray().Select(e => e.RenderMessage())
+                    .Should().Contain(msg => msg.Contains(expected), $"output should match {version}");
+            });
         }
 
         [Theory(DisplayName = "Default ILoggingAdapter output must be compatible with previous version")]
@@ -81,31 +82,15 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
         public async Task LogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {
             _sink.Clear();
-            await AwaitConditionAsync(() => _sink.Writes.Count == 0);
-            
-            Sys.Log.Info(messageFormat, args);
 
-            await AwaitConditionAsync(() => AssertCondition(logEvent =>
+            // Log inside AwaitAssertAsync so retries send fresh messages
+            // (handles race where logger isn't subscribed to EventStream yet)
+            await AwaitAssertAsync(() =>
             {
-                logEvent.RenderMessage().Should().Contain(expected);
-            }));
-        }
-        
-        private bool AssertCondition(Action<LogEvent> assertion)
-        {
-            while (_sink.Writes.TryDequeue(out var logEvent))
-            {
-                try
-                {
-                    assertion(logEvent);
-                    return true;
-                }
-                catch
-                {
-                    // no-op
-                }
-            }
-            return false;
+                Sys.Log.Info(messageFormat, args);
+                _sink.Writes.ToArray().Select(e => e.RenderMessage())
+                    .Should().Contain(msg => msg.Contains(expected), $"output should match {version}");
+            });
         }
         
         [Theory]

@@ -15,14 +15,14 @@ var log = Context.GetLogger()
 log.Info("My boss makes me use {Semantic} logging", "semantic");
 ```
 And it will work without having to explicitly call `Context.GetLogger&lt;SerilogLoggingAdapter&gt;()` first.</PackageReleaseNotes>
-    <VersionPrefix>1.5.25</VersionPrefix>
+    <VersionPrefix>1.5.57</VersionPrefix>
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Logger.Serilog</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <LangVersion>10</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <AkkaVersion>1.5.57-beta2</AkkaVersion>
+    <AkkaVersion>1.5.57</AkkaVersion>
     <AkkaHostingVersion>1.5.55.1</AkkaHostingVersion>
     <NetCoreTestVersion>net8.0</NetCoreTestVersion>
     <NetFrameworkTestVersion>net471</NetFrameworkTestVersion>

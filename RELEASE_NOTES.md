@@ -1,6 +1,6 @@
-#### 1.5.57-beta2 December 3rd 2025 ####
+#### 1.5.57 January 8 2026 ####
 
-* [Update Akka.NET to 1.5.57-beta2](https://github.com/akkadotnet/akka.net/releases/tag/1.5.57-beta2)
+* [Update Akka.NET to 1.5.57](https://github.com/akkadotnet/akka.net/releases/tag/1.5.57)
 * [Add semantic logging support for Akka.NET 1.5.56+](https://github.com/akkadotnet/Akka.Logger.Serilog/pull/294)
 
 This release adds full semantic logging support, enabling Serilog to receive properly structured message templates and parameters instead of pre-formatted strings. This enhancement leverages Akka.NET's semantic logging APIs introduced in version 1.5.56, enabling richer structured logging capabilities.
