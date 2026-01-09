@@ -27,6 +27,43 @@ log.Info("My boss makes me use {semantic} logging", "semantic"); // serilog sema
 
 This will allow all logging events to be consumed anywhere inside the `ActorSystem`, including places like the Akka.NET TestKit, without throwing `FormatException`s when they encounter semantic logging syntax outside of the `SerilogLogger`.
 
+### Log Filtering
+
+Akka.Logger.Serilog supports [Akka.NET's built-in log filtering](https://getakka.net/articles/utilities/logging.html#filtering-log-messages) to reduce log noise before messages reach Serilog. This is especially useful on high-volume systems.
+
+#### When to Use Akka LogFilter vs Serilog Native Filtering
+
+**Use Akka's LogFilter when:**
+- Filtering on `LogSource` (actor paths, class names) - this Akka-specific metadata isn't available in Serilog
+- You want to filter messages *before* they enter the Serilog pipeline (better performance on high-volume systems)
+- Using source-only filters (no string allocations required)
+
+```csharp
+var filters = new LogFilterBuilder()
+    .ExcludeSourceStartingWith("Akka.Remote.EndpointWriter")
+    .ExcludeSourceContaining("Heartbeat")
+    .Build();
+
+var bootstrap = BootstrapSetup.Create()
+    .WithSetup(filters);
+```
+
+**Use Serilog's native filtering when:**
+- Filtering on Serilog enricher properties (e.g., `TenantId`, `CorrelationId` from `ForContext`)
+- Using complex predicate logic
+- Filtering on properties added via `LogContext.PushProperty()`
+
+```csharp
+Log.Logger = new LoggerConfiguration()
+    .Filter.ByExcluding(evt =>
+        evt.Properties.TryGetValue("TenantId", out var val) &&
+        val.ToString() == "\"internal\"")
+    .WriteTo.Console()
+    .CreateLogger();
+```
+
+**Important limitation:** Serilog enrichers added via `ForContext()` or `LogContext.PushProperty()` are applied *after* Akka's LogFilter runs, so they cannot be filtered using Akka's LogFilter. Use Serilog's native `.Filter.ByExcluding()` for enricher-based filtering.
+
 ### Adding Property Enricher To Your Logs
 
 #### Default Properties

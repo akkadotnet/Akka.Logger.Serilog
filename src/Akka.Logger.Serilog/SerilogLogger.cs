@@ -24,6 +24,10 @@ namespace Akka.Logger.Serilog
     /// </summary>
     public class SerilogLogger : ReceiveActor, IRequiresMessageQueue<ILoggerMessageQueueSemantics>
     {
+        /// <summary>
+        /// Log filter. See https://getakka.net/articles/utilities/logging.html#filtering-log-messages for details.
+        /// </summary>
+        public LogFilterEvaluator Filter { get; }
         private readonly ILoggingAdapter _log = Logging.GetLogger(Context.System.EventStream, "SerilogLogger");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,10 +107,27 @@ namespace Akka.Logger.Serilog
         /// </summary>
         public SerilogLogger()
         {
-            Receive<Error>(Handle);
-            Receive<Warning>(Handle);
-            Receive<Info>(Handle);
-            Receive<Debug>(Handle);
+            Filter = Context.System.Settings.LogFilter;
+            Receive<Error>(e =>
+            {
+                if(Filter.ShouldTryKeepMessage(e, out _))
+                    Handle(e);
+            });
+            Receive<Warning>(w =>
+            {
+                if(Filter.ShouldTryKeepMessage(w, out _))
+                    Handle(w);
+            });
+            Receive<Info>(i =>
+            {
+                if(Filter.ShouldTryKeepMessage(i, out _))
+                    Handle(i);
+            });
+            Receive<Debug>(d =>
+            {
+                if(Filter.ShouldTryKeepMessage(d, out _))
+                    Handle(d);
+            });
             Receive<InitializeLogger>(_ =>
             {
                 _log.Info("SerilogLogger started");
