@@ -19,11 +19,11 @@ And it will work without having to explicitly call `Context.GetLogger&lt;Serilog
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Logger.Serilog</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <LangVersion>10</LangVersion>
+    <LangVersion>12</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <AkkaVersion>1.5.57</AkkaVersion>
-    <AkkaHostingVersion>1.5.55.1</AkkaHostingVersion>
+    <AkkaVersion>1.5.58</AkkaVersion>
+    <AkkaHostingVersion>1.5.57</AkkaHostingVersion>
     <NetCoreTestVersion>net8.0</NetCoreTestVersion>
     <NetFrameworkTestVersion>net471</NetFrameworkTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
