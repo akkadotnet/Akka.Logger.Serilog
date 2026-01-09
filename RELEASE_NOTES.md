@@ -1,3 +1,31 @@
+#### 1.5.58 January 10 2026 ####
+
+* [Update Akka.NET to 1.5.58](https://github.com/akkadotnet/akka.net/releases/tag/1.5.58)
+* [Update Akka.Hosting to 1.5.58](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.58)
+* [Add Akka.Hosting extensions for Serilog](https://github.com/akkadotnet/Akka.Logger.Serilog/pull/283)
+* [Add LogFilter integration support](https://github.com/akkadotnet/Akka.Logger.Serilog/pull/289)
+
+This release adds Akka.Hosting integration and LogFilter support for Serilog.
+
+**New Features:**
+
+- **Akka.Hosting Extensions**: New `AddSerilogLogging()` extension method for `LoggerConfigBuilder` that simplifies Serilog setup with Akka.Hosting. Automatically configures `SerilogLogger` and enables `SerilogLogMessageFormatter` for semantic logging.
+- **LogFilter Integration**: Serilog now properly integrates with Akka.NET's LogFilter API for source-based log filtering, enabling pre-pipeline filtering for improved performance.
+
+**Usage Example:**
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
+{
+    configurationBuilder.WithLogging(loggerConfigBuilder =>
+    {
+        loggerConfigBuilder.AddSerilogLogging();
+    });
+});
+```
+
 #### 1.5.57 January 8 2026 ####
 
 * [Update Akka.NET to 1.5.57](https://github.com/akkadotnet/akka.net/releases/tag/1.5.57)
