@@ -1,4 +1,4 @@
-#### 1.5.58 January 10 2026 ####
+#### 1.5.58 January 9 2026 ####
 
 * [Update Akka.NET to 1.5.58](https://github.com/akkadotnet/akka.net/releases/tag/1.5.58)
 * [Update Akka.Hosting to 1.5.58](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.58)
