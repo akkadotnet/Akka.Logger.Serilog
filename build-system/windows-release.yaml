@@ -12,9 +12,9 @@ variables:
   - name: githubConnectionName
     value: AkkaDotNet_Releases
   - name: projectName
-    value: Akka.Streams.Kafka
+    value: Akka.Logger.Serilog
   - name: githubRepositoryName
-    value: akkadotnet/Akka.Streams.Kafka
+    value: akkadotnet/Akka.Logger.Serilog
 
 jobs:
   - job: Release
