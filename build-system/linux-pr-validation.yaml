@@ -1,5 +1,3 @@
-# Pull request validation for Linux against the `dev` and `master` branches
-# See https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema for reference
 trigger:
   branches:
     include:
@@ -7,17 +5,17 @@ trigger:
       - master
       - v1.*
 
-name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
-
 pr:
   autoCancel: true # indicates whether additional pushes to a PR should cancel in-progress runs for the same PR. Defaults to true
   branches:
     include: [ dev, master, v1.* ] # branch names which will trigger a build
+
+name: $(SourceBranchName)_$(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 jobs:
 - template: azure-pipeline.template.yaml
   parameters:
     name: Ubuntu
     vmImage: 'ubuntu-latest'
-    scriptFileName: ./build.sh
-    scriptArgs: all
+    outputDirectory: 'bin/nuget'
+    artifactName: 'nuget_pack-$(Build.BuildId)'

@@ -11,10 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Logger.Serilog.Tests.P
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{489D8D37-C3F7-477D-9AC7-12DA1621B2CE}"
 	ProjectSection(SolutionItems) = preProject
-		build.cmd = build.cmd
-		build.fsx = build.fsx
 		build.ps1 = build.ps1
-		build.sh = build.sh
 		src\Directory.Build.props = src\Directory.Build.props
 		src\Directory.Packages.props = src\Directory.Packages.props
 		NuGet.config = NuGet.config
@@ -23,6 +20,22 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{28CDBE4C-053C-4CD4-B5D2-4DF529922916}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Hosting.LoggingDemo", "src\Examples\Akka.Hosting.LoggingDemo\Akka.Hosting.LoggingDemo.csproj", "{1E83DF8F-408B-48DB-8896-B81AD742E7BB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build-system", "build-system", "{E554841A-9D0B-4808-BE16-4E5D0204984F}"
+	ProjectSection(SolutionItems) = preProject
+		build-system\azure-pipeline.template.yaml = build-system\azure-pipeline.template.yaml
+		build-system\linux-pr-validation.yaml = build-system\linux-pr-validation.yaml
+		build-system\nightly-builds.yaml = build-system\nightly-builds.yaml
+		build-system\README.md = build-system\README.md
+		build-system\windows-pr-validation.yaml = build-system\windows-pr-validation.yaml
+		build-system\windows-release.yaml = build-system\windows-release.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{D0969176-5B3F-4CBA-AD47-BE1C9D2962C5}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\bumpVersion.ps1 = scripts\bumpVersion.ps1
+		scripts\getReleaseNotes.ps1 = scripts\getReleaseNotes.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,5 +68,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1E83DF8F-408B-48DB-8896-B81AD742E7BB} = {28CDBE4C-053C-4CD4-B5D2-4DF529922916}
+		{E554841A-9D0B-4808-BE16-4E5D0204984F} = {489D8D37-C3F7-477D-9AC7-12DA1621B2CE}
+		{D0969176-5B3F-4CBA-AD47-BE1C9D2962C5} = {489D8D37-C3F7-477D-9AC7-12DA1621B2CE}
 	EndGlobalSection
 EndGlobal
