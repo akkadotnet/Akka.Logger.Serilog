@@ -17,7 +17,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
-    <PackageVersion Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
+    <PackageVersion Include="Akka.TestKit.Xunit2" Version="1.5.20" />
     <PackageVersion Include="NBench" Version="2.0.1" />
   </ItemGroup>
   <!-- SourceLink support for all Akka.NET projects -->
