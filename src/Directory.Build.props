@@ -23,7 +23,7 @@ And it will work without having to explicitly call `Context.GetLogger&lt;Serilog
   </PropertyGroup>
   <PropertyGroup>
     <AkkaVersion>1.5.58</AkkaVersion>
-    <AkkaHostingVersion>1.5.57</AkkaHostingVersion>
+    <AkkaHostingVersion>1.5.58</AkkaHostingVersion>
     <NetCoreTestVersion>net8.0</NetCoreTestVersion>
     <NetFrameworkTestVersion>net471</NetFrameworkTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
