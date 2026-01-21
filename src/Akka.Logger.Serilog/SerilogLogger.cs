@@ -39,7 +39,17 @@ namespace Akka.Logger.Serilog
                 message = payload.Message;
 
             // Use semantic logging pattern: check if LogMessage and extract template
-            return message is LogMessage logMessage ? logMessage.Format : message?.ToString() ?? "{Message:l}";
+            if (message is LogMessage logMessage)
+                return logMessage.Format;
+
+            // For plain strings, use the string itself as the template.
+            // This gives each unique log message its own @EventType in Serilog/Seq,
+            // making logs filterable and distinguishable.
+            if (message is string str)
+                return str;
+
+            // For other objects, use generic template with literal formatting
+            return "{Message:l}";
         }
 
         private static object[] GetArgs(LogEvent logEvent)
@@ -50,11 +60,15 @@ namespace Akka.Logger.Serilog
                 message = payload.Message;
 
             // Use semantic logging pattern: extract parameters and filter PropertyEnricher objects
-            var parameters = message is LogMessage logMessage
-                ? logMessage.Parameters()
-                : new[] { message };
+            if (message is LogMessage logMessage)
+                return logMessage.Parameters().Where(a => a is not PropertyEnricher).ToArray();
 
-            return parameters.Where(a => a is not PropertyEnricher).ToArray();
+            // For plain strings, return empty array since the string IS the template (no placeholders)
+            if (message is string)
+                return [];
+
+            // For other objects, pass the object as the single argument to {Message:l}
+            return [message];
         }
 
         private static ILogger GetLogger(LogEvent logEvent) {

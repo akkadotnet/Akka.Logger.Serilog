@@ -227,6 +227,77 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             });
         }
 
+        /// <summary>
+        /// REGRESSION TEST: https://github.com/akkadotnet/Akka.Hosting/issues/701
+        /// Verifies that named placeholders are substituted in the rendered message.
+        ///
+        /// This is the equivalent of the bug fixed in Akka.Hosting's LoggerFactoryLogger where
+        /// FormatMessage() used string.Format() which only supports positional {0} placeholders,
+        /// causing named placeholders like {UserId} to appear raw in the output.
+        ///
+        /// Expected: "User 12345 with email user@example.com logged in"
+        /// Bug output: "User {UserId} with email {Email} logged in"
+        /// </summary>
+        [Fact(DisplayName = "Named placeholders should be substituted in rendered message")]
+        public async Task NamedPlaceholdersShouldBeSubstitutedInRenderedMessage()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Info("User {UserId} with email {Email} logged in", 12345, "user@example.com");
+                var logEvent = GetMatchingLogEvent(e => e.Properties.ContainsKey("UserId"));
+                logEvent.Should().NotBeNull();
+
+                var renderedMessage = logEvent!.RenderMessage();
+
+                // The rendered message should contain substituted values, NOT raw placeholders
+                renderedMessage.Should().Contain("12345",
+                    "the rendered message should contain the substituted UserId value");
+                renderedMessage.Should().Contain("user@example.com",
+                    "the rendered message should contain the substituted Email value");
+
+                // Should NOT contain raw placeholders
+                renderedMessage.Should().NotContain("{UserId}",
+                    "the rendered message should NOT contain the raw {UserId} placeholder");
+                renderedMessage.Should().NotContain("{Email}",
+                    "the rendered message should NOT contain the raw {Email} placeholder");
+            });
+        }
+
+        /// <summary>
+        /// REGRESSION TEST: https://github.com/akkadotnet/Akka.Hosting/issues/701
+        /// Verifies multiple named placeholders are all substituted correctly.
+        /// </summary>
+        [Fact(DisplayName = "Multiple named placeholders should all be substituted")]
+        public async Task MultipleNamedPlaceholdersShouldAllBeSubstituted()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                // Matches the Discord user's log format:
+                // _logger.Info("Published callback event: {Event} | ActorId: {ActorId}", eventName, actorId)
+                _loggingAdapter.Info("Published callback event: {Event} | ActorId: {ActorId}", "UserLoggedIn", "actor-123");
+                var logEvent = GetMatchingLogEvent(e => e.Properties.ContainsKey("Event"));
+                logEvent.Should().NotBeNull();
+
+                var renderedMessage = logEvent!.RenderMessage();
+
+                // Values should be substituted
+                renderedMessage.Should().Contain("UserLoggedIn",
+                    "the Event value should be substituted");
+                renderedMessage.Should().Contain("actor-123",
+                    "the ActorId value should be substituted");
+
+                // Raw placeholders should NOT appear
+                renderedMessage.Should().NotContain("{Event}",
+                    "should NOT contain raw {Event} placeholder");
+                renderedMessage.Should().NotContain("{ActorId}",
+                    "should NOT contain raw {ActorId} placeholder");
+            });
+        }
+
         private LogEvent? GetMatchingLogEvent(Func<LogEvent, bool> predicate)
         {
             return _sink.Writes.ToArray().FirstOrDefault(predicate);
