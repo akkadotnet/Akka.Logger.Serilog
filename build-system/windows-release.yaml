@@ -19,7 +19,7 @@ variables:
 jobs:
   - job: Release
     pool:
-      vmImage: windows-latest
+      vmImage: windows-2022
     steps:
       - task: UseDotNet@2
         displayName: 'Use .NET SDK from global.json'
