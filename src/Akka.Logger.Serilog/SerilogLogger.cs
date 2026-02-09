@@ -81,6 +81,17 @@ namespace Akka.Logger.Serilog
                     logger = logger.ForContext(enrichers);
             }
 
+            // Add context properties from WithContext() - these come from LogEvent.ContextProperties
+            // via TryGetProperties(), which merges context + message template properties
+            if (logEvent.TryGetProperties(out var properties))
+            {
+                var contextEnrichers = properties
+                    .Select(p => (ILogEventEnricher)new PropertyEnricher(p.Key, p.Value))
+                    .ToList();
+                if (contextEnrichers.Count > 0)
+                    logger = logger.ForContext(contextEnrichers);
+            }
+
             return logger;
         }
 

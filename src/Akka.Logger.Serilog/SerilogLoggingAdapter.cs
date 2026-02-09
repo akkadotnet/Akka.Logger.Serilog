@@ -28,6 +28,7 @@ namespace Akka.Logger.Serilog
     /// <summary>
     /// Serilog logging adapter.
     /// </summary>
+    [Obsolete("Use the standard ILoggingAdapter with WithContext() instead. This class will be removed in a future version.")]
     public class SerilogLoggingAdapter : LoggingAdapterBase
     {
         private readonly LoggingBus _bus;
