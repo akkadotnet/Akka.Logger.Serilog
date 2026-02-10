@@ -1,4 +1,4 @@
-#### 1.5.60 February 9 2026 ####
+#### 1.5.60 February 10 2026 ####
 
 * [Update Akka.NET to 1.5.60](https://github.com/akkadotnet/akka.net/releases/tag/1.5.60)
 * [Add WithContext() support and deprecate Serilog-specific ForContext()](https://github.com/akkadotnet/Akka.Logger.Serilog/pull/310)
