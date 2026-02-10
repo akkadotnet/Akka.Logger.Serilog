@@ -48,10 +48,7 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             _sys = ActorSystem.Create("TestActorSystem", Config);
             _testKit = new TestKit.Xunit2.TestKit(_sys, _helper);
             
-            var logSource = _sys.Name;
-            var logClass = typeof(ActorSystem);
-
-            _loggingAdapter = new SerilogLoggingAdapter(_sys.EventStream, logSource, logClass);
+            _loggingAdapter = Logging.GetLogger(_sys, _sys.Name);
             
             return Task.CompletedTask;
         }
@@ -208,12 +205,12 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             });
         }
 
-        [Fact(DisplayName = "Should work with ForContext enrichment")]
-        public async Task ForContextWithSemanticLoggingTest()
+        [Fact(DisplayName = "Should work with WithContext enrichment")]
+        public async Task WithContextAndSemanticLoggingTest()
         {
             _sink.Clear();
 
-            var contextLogger = _loggingAdapter.ForContext("TenantId", "TENANT-123");
+            var contextLogger = _loggingAdapter.WithContext("TenantId", "TENANT-123");
             await _testKit.AwaitAssertAsync(() =>
             {
                 contextLogger.Info("User {UserId} performed action", 456);

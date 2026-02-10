@@ -2,16 +2,35 @@
 
 * [Update Akka.NET to 1.5.60](https://github.com/akkadotnet/akka.net/releases/tag/1.5.60)
 * [Add WithContext() support and deprecate Serilog-specific ForContext()](https://github.com/akkadotnet/Akka.Logger.Serilog/pull/310)
+* [Convert tests from deprecated APIs to WithContext() and fix flaky net471 tests](https://github.com/akkadotnet/Akka.Logger.Serilog/pull/312)
 
 This release adds support for Akka.NET 1.5.60's built-in `WithContext()` logging context enrichment API. Context properties set via `WithContext()` on any `ILoggingAdapter` now automatically flow through to Serilog as structured properties.
 
-**Breaking Changes:**
+**Deprecations:**
 - `SerilogLoggingAdapter` class is now marked `[Obsolete]` - use the standard `ILoggingAdapter` with `WithContext()` instead
 - `ForContext()` extension method is now marked `[Obsolete]` - use `WithContext()` instead
 
+These deprecated APIs still work and will continue to work — they just produce compiler warnings. They will not be removed until a future major version.
+
+**What's NOT Changing:**
+
+Your existing Serilog configuration is completely unaffected. This deprecation only affects how you create logging adapters inside Akka.NET actor code — it does not change anything about the Serilog pipeline itself.
+
+Specifically, all of the following continue to work exactly as before:
+
+- **Your Serilog `LoggerConfiguration`** — whether configured via C# code, `appsettings.json`, or any other Serilog configuration provider
+- **Global enrichers** — `FromLogContext()`, `WithMachineName()`, `WithProcessId()`, `WithThreadId()`, and any custom `ILogEventEnricher` implementations
+- **Global properties** — static properties added via `Enrich.WithProperty()` or the `"Properties"` section in JSON config
+- **Output templates** — `{ActorPath}`, `{LogSource}`, `{Thread}`, and all other Akka metadata properties are still emitted exactly as before
+- **Sinks** — Console, Seq, Elasticsearch, file sinks, and all other Serilog sinks are unaffected
+- **`LogContext.PushProperty()`** — Serilog's ambient context API works the same as always
+- **Serilog's native `ILogger.ForContext()`** — this is Serilog's own API and is NOT deprecated; only the Akka-specific `ForContext()` extension method on `ILoggingAdapter` is deprecated
+- **`PropertyEnricher` parameters** — passing `PropertyEnricher` objects as log message parameters still works
+- **Level switches and minimum level overrides** — no changes to log level filtering behavior
+
 **Migration:**
 ```csharp
-// Old (deprecated)
+// Old (deprecated - produces compiler warning, but still works)
 var log = Context.GetLogger<SerilogLoggingAdapter>()
     .ForContext("TenantId", "TENANT-001");
 
@@ -19,6 +38,8 @@ var log = Context.GetLogger<SerilogLoggingAdapter>()
 var log = Context.GetLogger()
     .WithContext("TenantId", "TENANT-001");
 ```
+
+The new `WithContext()` API is part of core Akka.NET and works identically across all logging backends (Serilog, NLog, Microsoft.Extensions.Logging).
 
 #### 1.5.59 January 26 2026 ####
 

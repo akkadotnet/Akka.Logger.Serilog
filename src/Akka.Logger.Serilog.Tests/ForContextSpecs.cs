@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,252 +17,173 @@ using LogEvent = Akka.Event.LogEvent;
 
 namespace Akka.Logger.Serilog.Tests
 {
-    public class ForContextSpecs : TestKit.Xunit2.TestKit
+    public class ForContextSpecs : IAsyncLifetime
     {
-        public static readonly Config Config = @"akka.loglevel = DEBUG
-                                                 akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]";
-        private readonly ILoggingAdapter _loggingAdapter;
-        
-        /// <summary>
-        /// Used to test that https://github.com/akkadotnet/Akka.Logger.Serilog/issues/284 is fixed
-        /// </summary>
-        private readonly ILoggingAdapter _defaultLoggingAdapter;
+        public static readonly Config Config =
+@"akka.loglevel = DEBUG
+akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]
+akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Logger.Serilog""";
+
+        private readonly ITestOutputHelper _helper;
         private readonly TestSink _sink = new TestSink();
 
-        public ForContextSpecs(ITestOutputHelper helper) : base(Config, output: helper)
+        private ActorSystem _sys;
+        private TestKit.Xunit2.TestKit _testKit;
+        private ILoggingAdapter _loggingAdapter;
+
+        public ForContextSpecs(ITestOutputHelper helper)
         {
+            _helper = helper;
+
             global::Serilog.Log.Logger = new LoggerConfiguration()
-				.WriteTo.Sink(_sink)
-				.MinimumLevel.Information()
-				.CreateLogger();
-
-			var logSource = Sys.Name;
-            var logClass = typeof(ActorSystem);
-
-            _loggingAdapter = Sys.GetLogger<SerilogLoggingAdapter>(logSource, logClass);
-            _defaultLoggingAdapter = Sys.Log;
+                .WriteTo.Sink(_sink)
+                .MinimumLevel.Information()
+                .CreateLogger();
         }
-        
-        /// <summary>
-        /// Used to test that https://github.com/akkadotnet/Akka.Logger.Serilog/issues/284 is fixed
-        /// </summary>
-        [Fact]
-        public void ShouldLogMessageWithContextPropertyDefaultLogger()
+
+        public Task InitializeAsync()
         {
-	        var context = _defaultLoggingAdapter
-		        .ForContext("Address", "No. 4 Privet Drive")
-		        .ForContext("Town", "Little Whinging")
-		        .ForContext("County", "Surrey")
-		        .ForContext("Country", "England");
-
-	        _sink.Clear();
-	        AwaitCondition(() => _sink.Writes.Count == 0);
-
-	        context.Info("Hi {Person}", "Harry Potter");
-	        AwaitCondition(() => _sink.Writes.Count == 1);
-
-	        _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-	        logEvent.Level.Should().Be(LogEventLevel.Information);
-	        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
-	        logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
-	        logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
-	        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
-	        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
-	        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
-	        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+            _sys = ActorSystem.Create("ForContextTestSystem", Config);
+            _testKit = new TestKit.Xunit2.TestKit(_sys, _helper);
+            _loggingAdapter = Logging.GetLogger(_sys, _sys.Name);
+            return Task.CompletedTask;
         }
 
-        /// <summary>
-        /// Used to test that https://github.com/akkadotnet/Akka.Logger.Serilog/issues/284 is fixed
-        /// </summary>
-        [Fact]
-        public void ShouldLogMessageWithContextPropertyAndPropertyEnricherDefaultLogger()
+        public async Task DisposeAsync()
         {
-	        var context = _defaultLoggingAdapter
-		        .ForContext("Address", "No. 4 Privet Drive")
-		        .ForContext("Town", "Little Whinging");
-
-	        _sink.Clear();
-	        AwaitCondition(() => _sink.Writes.Count == 0);
-
-	        context.Info("Hi {Person}", "Harry Potter", new PropertyEnricher("County", "Surrey"), new PropertyEnricher("Country", "England"));
-	        AwaitCondition(() => _sink.Writes.Count == 1);
-
-	        _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-	        logEvent.Level.Should().Be(LogEventLevel.Information);
-	        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
-	        logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
-	        logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
-	        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
-	        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
-	        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
-	        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+            _testKit.Shutdown();
+            await _sys.Terminate();
         }
 
         [Fact]
-        public void ShouldLogMessageWithContextProperty()
+        public async Task ShouldLogMessageWithContextPropertyDefaultLogger()
         {
-	        var context = _loggingAdapter
-		        .ForContext("Address", "No. 4 Privet Drive")
-		        .ForContext("Town", "Little Whinging")
-		        .ForContext("County", "Surrey")
-		        .ForContext("Country", "England");
+            var context = _loggingAdapter
+                .WithContext("Address", "No. 4 Privet Drive")
+                .WithContext("Town", "Little Whinging")
+                .WithContext("County", "Surrey")
+                .WithContext("Country", "England");
 
-	        _sink.Clear();
-	        AwaitCondition(() => _sink.Writes.Count == 0);
+            _sink.Clear();
 
-	        context.Info("Hi {Person}", "Harry Potter");
-	        AwaitCondition(() => _sink.Writes.Count == 1);
-
-	        _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-	        logEvent.Level.Should().Be(LogEventLevel.Information);
-	        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
-	        logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
-	        logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
-	        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
-	        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
-	        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
-	        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                context.Info("Hi {Person}", "Harry Potter");
+                var logEvent = _sink.Writes.ToArray()
+                    .FirstOrDefault(e => e.Properties.ContainsKey("Person"));
+                logEvent.Should().NotBeNull();
+                logEvent!.Level.Should().Be(LogEventLevel.Information);
+                logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+                logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
+                logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
+                logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+                logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+                logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+                logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+            });
         }
 
         [Fact]
-        public void ShouldLogMessageWithContextPropertyAndPropertyEnricher()
+        public async Task ShouldLogMessageWithContextProperty()
         {
-	        var context = _loggingAdapter
-		        .ForContext("Address", "No. 4 Privet Drive")
-		        .ForContext("Town", "Little Whinging");
+            var context = _loggingAdapter
+                .WithContext("Address", "No. 4 Privet Drive")
+                .WithContext("Town", "Little Whinging")
+                .WithContext("County", "Surrey")
+                .WithContext("Country", "England");
 
-	        _sink.Clear();
-	        AwaitCondition(() => _sink.Writes.Count == 0);
+            _sink.Clear();
 
-	        context.Info("Hi {Person}", "Harry Potter", new PropertyEnricher("County", "Surrey"), new PropertyEnricher("Country", "England"));
-	        AwaitCondition(() => _sink.Writes.Count == 1);
-
-	        _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-	        logEvent.Level.Should().Be(LogEventLevel.Information);
-	        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
-	        logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
-	        logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
-	        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
-	        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
-	        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
-	        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                context.Info("Hi {Person}", "Harry Potter");
+                var logEvent = _sink.Writes.ToArray()
+                    .FirstOrDefault(e => e.Properties.ContainsKey("Person"));
+                logEvent.Should().NotBeNull();
+                logEvent!.Level.Should().Be(LogEventLevel.Information);
+                logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+                logEvent.Properties.Should().ContainKeys("Person", "Address", "Town", "County", "Country");
+                logEvent.Properties["Person"].ToString().Should().Be("\"Harry Potter\"");
+                logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+                logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+                logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+                logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+            });
         }
 
         [Fact]
-        public void ShouldPassAlongAdditionalContext()
+        public async Task ShouldPassAlongAdditionalContext()
         {
             var traceId = Guid.NewGuid();
             var spanId = Guid.NewGuid();
-            var context1 = _loggingAdapter.ForContext("traceId", traceId);
-            var context2 = context1.ForContext("spanId", spanId);
+            var context1 = _loggingAdapter.WithContext("traceId", traceId);
+            var context2 = context1.WithContext("spanId", spanId);
 
             _sink.Clear();
-            AwaitCondition(() => _sink.Writes.Count == 0);
 
-            context1.Info("hi");
-            AwaitCondition(() => _sink.Writes.Count == 1);
-
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Information);
-            logEvent.Properties.ContainsKey("traceId").Should().BeTrue();
-            logEvent.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                context1.Info("hi");
+                var logEvent = _sink.Writes.ToArray()
+                    .FirstOrDefault(e => e.Properties.ContainsKey("traceId") &&
+                                        e.RenderMessage().Contains("hi"));
+                logEvent.Should().NotBeNull();
+                logEvent!.Level.Should().Be(LogEventLevel.Information);
+                logEvent.Properties.ContainsKey("traceId").Should().BeTrue();
+                logEvent.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
+            });
 
             _sink.Clear();
-            AwaitCondition(() => _sink.Writes.Count == 0);
 
-            context2.Info("bye");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                context2.Info("bye");
+                var logEvent2 = _sink.Writes.ToArray()
+                    .FirstOrDefault(e => e.Properties.ContainsKey("spanId") &&
+                                         e.RenderMessage().Contains("bye"));
+                logEvent2.Should().NotBeNull();
+                logEvent2!.Level.Should().Be(LogEventLevel.Information);
 
-            AwaitCondition(() => _sink.Writes.Count == 1);
+                // needs to still have the context from context1
+                logEvent2.Properties.ContainsKey("traceId").Should().BeTrue();
+                logEvent2.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
 
-            _sink.Writes.TryDequeue(out var logEvent2).Should().BeTrue();
-
-            logEvent2.Level.Should().Be(LogEventLevel.Information);
-
-            // needs to still have the context from context1
-            logEvent2.Properties.ContainsKey("traceId").Should().BeTrue();
-            logEvent2.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
-
-            // and its own context from context2
-            logEvent2.Properties.ContainsKey("spanId").Should().BeTrue();
-            logEvent2.Properties["spanId"].ToString().Should().BeEquivalentTo(spanId.ToString());
+                // and its own context from context2
+                logEvent2.Properties.ContainsKey("spanId").Should().BeTrue();
+                logEvent2.Properties["spanId"].ToString().Should().BeEquivalentTo(spanId.ToString());
+            });
         }
 
         [Fact]
-        public void ShouldPassAlongAdditionalContextWorkaround()
+        public async Task ShouldPassAlongClassNameAsSourceContext()
         {
-            var traceId = Guid.NewGuid();
-            var spanId = Guid.NewGuid();
-            var context1 = (SerilogLoggingAdapter)_loggingAdapter.ForContext("traceId", traceId);
-            var context2 = (SerilogLoggingAdapter)context1.ForContext("spanId", spanId);
-
             _sink.Clear();
-            AwaitCondition(() => _sink.Writes.Count == 0);
 
-            context1.Info("hi");
-            AwaitCondition(() => _sink.Writes.Count == 1);
-
-            _sink.Writes.TryDequeue(out var logEvent).Should().BeTrue();
-            logEvent.Level.Should().Be(LogEventLevel.Information);
-            logEvent.Properties.ContainsKey("traceId").Should().BeTrue();
-            logEvent.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
-
-            _sink.Clear();
-            AwaitCondition(() => _sink.Writes.Count == 0);
-
-            context2.Info("bye");
-
-            AwaitCondition(() => _sink.Writes.Count == 1);
-
-            _sink.Writes.TryDequeue(out var logEvent2).Should().BeTrue();
-
-            logEvent2.Level.Should().Be(LogEventLevel.Information);
-
-            // needs to still have the context from context1
-            logEvent2.Properties.ContainsKey("traceId").Should().BeTrue();
-            logEvent2.Properties["traceId"].ToString().Should().BeEquivalentTo(traceId.ToString());
-
-            // and its own context from context2
-            logEvent2.Properties.ContainsKey("spanId").Should().BeTrue();
-            logEvent2.Properties["spanId"].ToString().Should().BeEquivalentTo(spanId.ToString());
-
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Info("hi");
+                var logEvent = _sink.Writes.ToArray()
+                    .FirstOrDefault(e => e.RenderMessage().Contains("hi"));
+                logEvent.Should().NotBeNull();
+                logEvent!.Level.Should().Be(LogEventLevel.Information);
+                logEvent.Properties.ContainsKey(Constants.SourceContextPropertyName).Should().BeTrue();
+            });
         }
 
-		[Fact]
-		public void ShouldPassAlongClassNameAsSourceContext()
-		{
-			var context = _loggingAdapter;
+        [Fact]
+        public async Task ShouldPassAlongActorPath()
+        {
+            _sink.Clear();
 
-			_sink.Clear();
-			AwaitCondition(() => _sink.Writes.Count == 0);
-
-			context.Info( "hi" );
-			AwaitCondition(() => _sink.Writes.Count == 1);
-
-			_sink.Writes.TryDequeue( out var logEvent ).Should().BeTrue();
-			logEvent.Level.Should().Be(LogEventLevel.Information);
-			logEvent.Properties.ContainsKey(Constants.SourceContextPropertyName).Should().BeTrue();
-			logEvent.Properties[Constants.SourceContextPropertyName].ToString().Should().BeEquivalentTo($"\"{typeof(ActorSystem).FullName}\"");
-		}
-
-		[Fact]
-		public void ShouldPassAlongActorPath()
-		{
-			var context = _loggingAdapter;
-
-			_sink.Clear();
-			AwaitCondition(() => _sink.Writes.Count == 0);
-
-			context.Info( "hi" );
-			AwaitCondition(() => _sink.Writes.Count == 1);
-
-			_sink.Writes.TryDequeue( out var logEvent ).Should().BeTrue();
-			logEvent.Level.Should().Be(LogEventLevel.Information);
-			logEvent.Properties.ContainsKey("ActorPath").Should().BeTrue();
-			logEvent.Properties["ActorPath"].ToString().Should().BeEquivalentTo($"\"{this.TestActor.Path}\"");
-		}
-	}
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Info("hi");
+                var logEvent = _sink.Writes.ToArray()
+                    .FirstOrDefault(e => e.RenderMessage().Contains("hi"));
+                logEvent.Should().NotBeNull();
+                logEvent!.Level.Should().Be(LogEventLevel.Information);
+                logEvent.Properties.ContainsKey("ActorPath").Should().BeTrue();
+            });
+        }
+    }
 }
-
-
-

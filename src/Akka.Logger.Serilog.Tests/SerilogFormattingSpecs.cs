@@ -40,10 +40,7 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             
             SerilogLog.Logger = _serilogLogger;
 
-            var logSource = Sys.Name;
-            var logClass = typeof(ActorSystem);
-
-            _loggingAdapter = new SerilogLoggingAdapter(Sys.EventStream, logSource, logClass);
+            _loggingAdapter = Logging.GetLogger(Sys, Sys.Name);
         }
 
         [Theory(DisplayName = "Raw Serilog output must be compatible with previous version")]
@@ -61,7 +58,7 @@ akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Log
             });
         }
 
-        [Theory(DisplayName = "SerilogLoggingAdapter output must be compatible with previous version")]
+        [Theory(DisplayName = "ILoggingAdapter output must be compatible with previous version")]
         [MemberData(nameof(MessageFormatDataGenerator))]
         public async Task AdapterLogOutputRegressionTest(string version, string expected, string messageFormat, object[] args)
         {

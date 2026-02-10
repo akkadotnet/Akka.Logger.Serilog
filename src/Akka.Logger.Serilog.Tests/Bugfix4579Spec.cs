@@ -37,17 +37,18 @@ namespace Akka.Logger.Serilog.Tests
                     akka.remote.dot-netty.tcp.port = 5110
                     akka.cluster.seed-nodes = [""akka.tcp://test@localhost:5110""]
                     akka.loglevel = DEBUG
-                    akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]";
+                    akka.loggers=[""Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog""]
+                    akka.logger-formatter=""Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Logger.Serilog""";
         }
 
         private class LoggerActor : UntypedActor
         {
-            private readonly ILoggingAdapter _logger = Context.GetLogger<SerilogLoggingAdapter>(); // correct
+            private readonly ILoggingAdapter _logger = Context.GetLogger();
 
             protected override void OnReceive(object message)
             {
-                _logger.ForContext("semantic", true);
-                _logger.Info("My boss makes me use {msg} logging", message);
+                var contextLogger = _logger.WithContext("semantic", true);
+                contextLogger.Info("My boss makes me use {msg} logging", message);
             }
         }
 

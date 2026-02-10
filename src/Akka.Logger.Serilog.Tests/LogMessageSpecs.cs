@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
@@ -20,7 +21,7 @@ namespace Akka.Logger.Serilog.Tests
 
         private readonly ITestOutputHelper _helper;
         private readonly TestSink _sink;
-        
+
         private ActorSystem _sys;
         private TestKit.Xunit2.TestKit _testKit;
         private ILoggingAdapter _loggingAdapter;
@@ -29,19 +30,19 @@ namespace Akka.Logger.Serilog.Tests
         {
             _helper = helper;
             _sink = new TestSink(helper);
-            
+
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Sink(_sink)
                 .MinimumLevel.Debug()
                 .CreateLogger();
         }
-        
+
         public Task InitializeAsync()
         {
             _sys = ActorSystem.Create("TestActorSystem", Config);
             _testKit = new TestKit.Xunit2.TestKit(_sys, _helper);
             _loggingAdapter = _sys.Log;
-            
+
             return Task.CompletedTask;
         }
 
@@ -50,323 +51,275 @@ namespace Akka.Logger.Serilog.Tests
             _testKit.Shutdown();
             await _sys.Terminate();
         }
-        
-        [Fact]
-        public void ShouldLogDebugLevelMessage()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            context.Debug("hi");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Debug
-                                            && logEvent.RenderMessage() == "hi")
-            );
-        }
 
         [Fact]
-        public void ShouldLogMessageWithPropertyEnrichers()
+        public async Task ShouldLogDebugLevelMessage()
         {
-            var context = _loggingAdapter;
-
             _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
 
-            context.Debug("Hi {0}", "Harry Potter", 
-                new PropertyEnricher("Address", "No. 4 Privet Drive"),
-                new PropertyEnricher("Town", "Little Whinging"),
-                new PropertyEnricher("County", "Surrey"),
-                new PropertyEnricher("Country", "England"));
-            
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent =>
-                {
-                    try
-                    {
-                        logEvent.Level.Should().Be(LogEventLevel.Debug);
-                        logEvent.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
-                        logEvent.Properties.Should().ContainKeys("Address", "Town", "County", "Country");
-                        logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
-                        logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
-                        logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
-                        logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
-                        return true;
-                    }
-                    catch
-                    {
-                        return false;
-                    }
-                })
-            );
-        }
-
-        [Fact]
-        public void ShouldLogDebugLevelMessageWithArgs()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            context.Debug("hi {0}", "test");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Debug
-                                            && logEvent.RenderMessage() == "hi \"test\"")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogDebugLevelMessageWithException()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            var exception = new Exception("BOOM!!!");
-            context.Debug(exception, "hi");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Debug
-                                            && logEvent.Exception == exception
-                                            && logEvent.RenderMessage() == "hi")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogDebugLevelMessageWithArgsAndException()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            var exception = new Exception("BOOM!!!");
-            context.Debug(exception, "hi {0}", "test");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Debug
-                                            && logEvent.Exception == exception
-                                            && logEvent.RenderMessage() == "hi \"test\"")
-            );
-        }
-        
-        [Fact]
-        public void ShouldLogInfoLevelMessage()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            context.Info("hi");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Information
-                                            && logEvent.RenderMessage() == "hi")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogInfoLevelMessageWithArgs()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            context.Info("hi {0}", "test");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Information
-                                            && logEvent.RenderMessage() == "hi \"test\"")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogInfoLevelMessageWithException()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            var exception = new Exception("BOOM!!!");
-            context.Info(exception, "hi");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Information
-                                            && logEvent.Exception == exception
-                                            && logEvent.RenderMessage() == "hi")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogInfoLevelMessageWithArgsAndException()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            var exception = new Exception("BOOM!!!");
-            context.Info(exception, "hi {0}", "test");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Information
-                                            && logEvent.Exception == exception
-                                            && logEvent.RenderMessage() == "hi \"test\"")
-            );
-        }
-        
-        [Fact]
-        public void ShouldLogWarningLevelMessage()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            context.Warning("hi");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Warning
-                                            && logEvent.RenderMessage() == "hi")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogWarningLevelMessageWithArgs()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            context.Warning("hi {0}", "test");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Warning
-                                            && logEvent.RenderMessage() == "hi \"test\"")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogWarningLevelMessageWithException()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            var exception = new Exception("BOOM!!!");
-            context.Warning(exception, "hi");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Warning
-                                            && logEvent.Exception == exception
-                                            && logEvent.RenderMessage() == "hi")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogWarningLevelMessageWithArgsAndException()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            var exception = new Exception("BOOM!!!");
-            context.Warning(exception, "hi {0}", "test");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Warning
-                                            && logEvent.Exception == exception
-                                            && logEvent.RenderMessage() == "hi \"test\"")
-            );
-        }
-        
-        [Fact]
-        public void ShouldLogErrorLevelMessage()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            context.Error("hi");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Error
-                                            && logEvent.RenderMessage() == "hi")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogErrorLevelMessageWithArgs()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            context.Error("hi {0}", "test");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Error
-                                            && logEvent.RenderMessage() == "hi \"test\"")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogErrorLevelMessageWithException()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            var exception = new Exception("BOOM!!!");
-            context.Error(exception, "hi");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Error
-                                            && logEvent.Exception == exception
-                                            && logEvent.RenderMessage() == "hi")
-            );
-        }
-
-        [Fact]
-        public void ShouldLogErrorLevelMessageWithArgsAndException()
-        {
-            var context = _loggingAdapter;
-
-            _sink.Clear();
-            _testKit.AwaitCondition(() => _sink.Writes.Count == 0);
-
-            var exception = new Exception("BOOM!!!");
-            context.Error(exception, "hi {0}", "test");
-
-            _testKit.AwaitCondition(() =>
-                AssertCondition(logEvent => logEvent.Level == LogEventLevel.Error
-                                            && logEvent.Exception == exception
-                                            && logEvent.RenderMessage() == "hi \"test\"")
-            );
-        }
-
-        private bool AssertCondition(Func<LogEvent, bool> condition)
-        {
-            while (_sink.Writes.TryDequeue(out var logEvent))
+            await _testKit.AwaitAssertAsync(() =>
             {
-                if (condition(logEvent))
-                    return true;
-            }
-            return false;
+                _loggingAdapter.Debug("hi");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Debug
+                                                       && e.RenderMessage() == "hi");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogMessageWithPropertyEnrichers()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Debug("Hi {0}", "Harry Potter",
+                    new PropertyEnricher("Address", "No. 4 Privet Drive"),
+                    new PropertyEnricher("Town", "Little Whinging"),
+                    new PropertyEnricher("County", "Surrey"),
+                    new PropertyEnricher("Country", "England"));
+
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Debug
+                                                       && e.Properties.ContainsKey("Address"));
+                logEvent.Should().NotBeNull();
+                logEvent!.RenderMessage().Should().Contain("Hi \"Harry Potter\"");
+                logEvent.Properties.Should().ContainKeys("Address", "Town", "County", "Country");
+                logEvent.Properties["Address"].ToString().Should().Be("\"No. 4 Privet Drive\"");
+                logEvent.Properties["Town"].ToString().Should().Be("\"Little Whinging\"");
+                logEvent.Properties["County"].ToString().Should().Be("\"Surrey\"");
+                logEvent.Properties["Country"].ToString().Should().Be("\"England\"");
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogDebugLevelMessageWithArgs()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Debug("hi {0}", "test");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Debug
+                                                       && e.RenderMessage() == "hi \"test\"");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogDebugLevelMessageWithException()
+        {
+            _sink.Clear();
+
+            var exception = new Exception("BOOM!!!");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Debug(exception, "hi");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Debug
+                                                       && e.Exception == exception
+                                                       && e.RenderMessage() == "hi");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogDebugLevelMessageWithArgsAndException()
+        {
+            _sink.Clear();
+
+            var exception = new Exception("BOOM!!!");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Debug(exception, "hi {0}", "test");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Debug
+                                                       && e.Exception == exception
+                                                       && e.RenderMessage() == "hi \"test\"");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogInfoLevelMessage()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Info("hi");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Information
+                                                       && e.RenderMessage() == "hi");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogInfoLevelMessageWithArgs()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Info("hi {0}", "test");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Information
+                                                       && e.RenderMessage() == "hi \"test\"");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogInfoLevelMessageWithException()
+        {
+            _sink.Clear();
+
+            var exception = new Exception("BOOM!!!");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Info(exception, "hi");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Information
+                                                       && e.Exception == exception
+                                                       && e.RenderMessage() == "hi");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogInfoLevelMessageWithArgsAndException()
+        {
+            _sink.Clear();
+
+            var exception = new Exception("BOOM!!!");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Info(exception, "hi {0}", "test");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Information
+                                                       && e.Exception == exception
+                                                       && e.RenderMessage() == "hi \"test\"");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogWarningLevelMessage()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Warning("hi");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Warning
+                                                       && e.RenderMessage() == "hi");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogWarningLevelMessageWithArgs()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Warning("hi {0}", "test");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Warning
+                                                       && e.RenderMessage() == "hi \"test\"");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogWarningLevelMessageWithException()
+        {
+            _sink.Clear();
+
+            var exception = new Exception("BOOM!!!");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Warning(exception, "hi");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Warning
+                                                       && e.Exception == exception
+                                                       && e.RenderMessage() == "hi");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogWarningLevelMessageWithArgsAndException()
+        {
+            _sink.Clear();
+
+            var exception = new Exception("BOOM!!!");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Warning(exception, "hi {0}", "test");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Warning
+                                                       && e.Exception == exception
+                                                       && e.RenderMessage() == "hi \"test\"");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogErrorLevelMessage()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Error("hi");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Error
+                                                       && e.RenderMessage() == "hi");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogErrorLevelMessageWithArgs()
+        {
+            _sink.Clear();
+
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Error("hi {0}", "test");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Error
+                                                       && e.RenderMessage() == "hi \"test\"");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogErrorLevelMessageWithException()
+        {
+            _sink.Clear();
+
+            var exception = new Exception("BOOM!!!");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Error(exception, "hi");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Error
+                                                       && e.Exception == exception
+                                                       && e.RenderMessage() == "hi");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task ShouldLogErrorLevelMessageWithArgsAndException()
+        {
+            _sink.Clear();
+
+            var exception = new Exception("BOOM!!!");
+            await _testKit.AwaitAssertAsync(() =>
+            {
+                _loggingAdapter.Error(exception, "hi {0}", "test");
+                var logEvent = GetMatchingLogEvent(e => e.Level == LogEventLevel.Error
+                                                       && e.Exception == exception
+                                                       && e.RenderMessage() == "hi \"test\"");
+                logEvent.Should().NotBeNull();
+            });
+        }
+
+        private LogEvent? GetMatchingLogEvent(Func<LogEvent, bool> predicate)
+        {
+            return _sink.Writes.ToArray().FirstOrDefault(predicate);
         }
     }
 }
