@@ -5,27 +5,34 @@ This is the Serilog integration plugin for Akka.NET. Please check out our [docum
 Targets [Serilog 2.12.0](https://www.nuget.org/packages/Serilog/2.12.0).
 
 ### Semantic Logging Syntax
-If you intend on using any of the Serilog semantic logging formats in your logging strings, __you need to use the SerilogLoggingAdapter__ inside your instrumented code or there could be elsewhere inside parts of your `ActorSystem`:
+When using [Akka.Hosting](https://github.com/akkadotnet/Akka.Hosting) with `AddSerilogLogging()`, the `SerilogLogMessageFormatter` is automatically configured and semantic logging works with the standard `ILoggingAdapter`:
 
 ```csharp
-var log = Context.GetLogger<SerilogLoggingAdapter>(); // correct
-log.Info("My boss makes me use {semantic} logging", "semantic"); // serilog semantic logging format
+var log = Context.GetLogger(); // standard ILoggingAdapter
+log.Info("User {UserId} performed {Action}", userId, "login"); // semantic logging works
 ```
 
-or
+If you are configuring Akka.NET without Akka.Hosting, you need to set the `SerilogLogMessageFormatter` in your HOCON config:
+
+```hocon
+akka.logger-formatter = "Akka.Logger.Serilog.SerilogLogMessageFormatter, Akka.Logger.Serilog"
+```
+
+### Adding Context Properties To Your Logs
+
+As of Akka.NET 1.5.60, you can use the built-in `WithContext()` method on any `ILoggingAdapter` to add persistent properties to all log messages produced by that adapter. These properties automatically flow through to Serilog as structured properties.
 
 ```csharp
-var log = MyActorSystem.GetLogger<SerilogLoggingAdapter>(myContextObject); // correct
-log.Info("My boss makes me use {semantic} logging", "semantic"); // serilog semantic logging format
+var log = Context.GetLogger()
+    .WithContext("TenantId", "TENANT-001")
+    .WithContext("CorrelationId", correlationId)
+    .WithContext("Region", "us-east-1");
+log.Info("Processing request for {UserId}", userId);
 ```
 
-or
-```csharp
-var log = MyActorSystem.GetLogger<SerilogLoggingAdapter>(contextName, contextType); // correct
-log.Info("My boss makes me use {semantic} logging", "semantic"); // serilog semantic logging format
-```
+All logging done using the `log` `ILoggingAdapter` instance will include "TenantId", "CorrelationId", and "Region" as Serilog properties, in addition to the "UserId" semantic template property.
 
-This will allow all logging events to be consumed anywhere inside the `ActorSystem`, including places like the Akka.NET TestKit, without throwing `FormatException`s when they encounter semantic logging syntax outside of the `SerilogLogger`.
+`WithContext()` is part of core Akka.NET and works with all logging backends (Serilog, NLog, Microsoft.Extensions.Logging), not just Serilog.
 
 ### Log Filtering
 
@@ -49,7 +56,7 @@ var bootstrap = BootstrapSetup.Create()
 ```
 
 **Use Serilog's native filtering when:**
-- Filtering on Serilog enricher properties (e.g., `TenantId`, `CorrelationId` from `ForContext`)
+- Filtering on Serilog enricher properties (e.g., `TenantId`, `CorrelationId` from `WithContext`)
 - Using complex predicate logic
 - Filtering on properties added via `LogContext.PushProperty()`
 
@@ -62,52 +69,25 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 ```
 
-**Important limitation:** Serilog enrichers added via `ForContext()` or `LogContext.PushProperty()` are applied *after* Akka's LogFilter runs, so they cannot be filtered using Akka's LogFilter. Use Serilog's native `.Filter.ByExcluding()` for enricher-based filtering.
+**Important limitation:** Context properties added via `WithContext()` or `LogContext.PushProperty()` are applied *after* Akka's LogFilter runs, so they cannot be filtered using Akka's LogFilter. Use Serilog's native `.Filter.ByExcluding()` for enricher-based filtering.
 
-### Adding Property Enricher To Your Logs
+### Deprecated: SerilogLoggingAdapter and ForContext()
 
-#### Default Properties
-You can add property enrichers to the logging adapter that will be added to all logging calls to that logging adapter.
+> **Note:** `SerilogLoggingAdapter`, the `ForContext()` extension method, and `Context.GetLogger<SerilogLoggingAdapter>()` are deprecated as of Akka.Logger.Serilog 1.5.60. Use the standard `ILoggingAdapter` with `WithContext()` instead.
+
+If you are migrating from `ForContext()`:
 
 ```csharp
+// Old (deprecated)
 var log = Context.GetLogger<SerilogLoggingAdapter>()
-    .ForContext("Address", "No. 4 Privet Drive")
-    .ForContext("Town", "Little Whinging")
-    .ForContext("County", "Surrey")
-    .ForContext("Country", "England");
-log.Info("My boss makes me use {Semantic} logging", "semantic");
-```
+    .ForContext("TenantId", "TENANT-001");
 
-All logging done using the `log` `ILoggingAdapter` instance will append "Address", "Town", "County", and "Country" properties into the Serilog log.
-
-#### One-off Properties
-
-You can add one-off property to a single log message by appending `PropertyEnricher` instances at the end of your logging calls.
-
-```csharp
-var log = Context.GetLogger<SerilogLoggingAdapter>();
-log.Info(
-    "My boss makes me use {Semantic} logging", "semantic",
-    new PropertyEnricher("County", "Surrey"), 
-    new PropertyEnricher("Country", "England"));
-```
-
-This log entry will have "County" and "Country" properties added to it.
-
-### Automatically Convert `ILoggingAdapter` into `SerilogLoggingAdapter`
-
-As of Akka.Logger.Serilog v1.5.25, you can now do the following:
-
-```csharp
+// New (recommended)
 var log = Context.GetLogger()
-    .ForContext("Address", "No. 4 Privet Drive")
-    .ForContext("Town", "Little Whinging")
-    .ForContext("County", "Surrey")
-    .ForContext("Country", "England");
-log.Info("My boss makes me use {Semantic} logging", "semantic");
+    .WithContext("TenantId", "TENANT-001");
 ```
 
-And it will work without having to explicitly call `Context.GetLogger<SerilogLoggingAdapter>()` first.
+The `ForContext()` and `SerilogLoggingAdapter` APIs will continue to work but will be removed in a future major version.
 
 ## Building this solution
 To run the build script associated with this solution, execute the following:

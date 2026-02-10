@@ -1,3 +1,25 @@
+#### 1.5.60 February 9 2026 ####
+
+* [Update Akka.NET to 1.5.60](https://github.com/akkadotnet/akka.net/releases/tag/1.5.60)
+* [Add WithContext() support and deprecate Serilog-specific ForContext()](https://github.com/akkadotnet/Akka.Logger.Serilog/pull/310)
+
+This release adds support for Akka.NET 1.5.60's built-in `WithContext()` logging context enrichment API. Context properties set via `WithContext()` on any `ILoggingAdapter` now automatically flow through to Serilog as structured properties.
+
+**Breaking Changes:**
+- `SerilogLoggingAdapter` class is now marked `[Obsolete]` - use the standard `ILoggingAdapter` with `WithContext()` instead
+- `ForContext()` extension method is now marked `[Obsolete]` - use `WithContext()` instead
+
+**Migration:**
+```csharp
+// Old (deprecated)
+var log = Context.GetLogger<SerilogLoggingAdapter>()
+    .ForContext("TenantId", "TENANT-001");
+
+// New (recommended)
+var log = Context.GetLogger()
+    .WithContext("TenantId", "TENANT-001");
+```
+
 #### 1.5.59 January 26 2026 ####
 
 * [Update Akka.NET to 1.5.59](https://github.com/akkadotnet/akka.net/releases/tag/1.5.59)
