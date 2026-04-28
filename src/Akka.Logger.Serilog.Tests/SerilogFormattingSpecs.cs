@@ -10,13 +10,12 @@ using Akka.Logger.Serilog.Tests.Generator;
 using FluentAssertions;
 using Serilog;
 using Xunit;
-using Xunit.Abstractions;
 using LogEvent = Serilog.Events.LogEvent;
 using SerilogLog = Serilog.Log;
 
 namespace Akka.Logger.Serilog.Tests
 {
-    public class SerilogFormattingSpecs : TestKit.Xunit2.TestKit
+    public class SerilogFormattingSpecs : TestKit.Xunit.TestKit
     {
         public static readonly Config Config = 
 @"

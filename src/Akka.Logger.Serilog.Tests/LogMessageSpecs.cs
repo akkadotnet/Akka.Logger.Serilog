@@ -9,7 +9,6 @@ using Serilog;
 using Serilog.Core.Enrichers;
 using Serilog.Events;
 using Xunit;
-using Xunit.Abstractions;
 using LogEvent = Serilog.Events.LogEvent;
 
 namespace Akka.Logger.Serilog.Tests
@@ -23,7 +22,7 @@ namespace Akka.Logger.Serilog.Tests
         private readonly TestSink _sink;
 
         private ActorSystem _sys;
-        private TestKit.Xunit2.TestKit _testKit;
+        private TestKit.Xunit.TestKit _testKit;
         private ILoggingAdapter _loggingAdapter;
 
         public LogMessageSpecs(ITestOutputHelper helper)
@@ -37,16 +36,16 @@ namespace Akka.Logger.Serilog.Tests
                 .CreateLogger();
         }
 
-        public Task InitializeAsync()
+        public ValueTask InitializeAsync()
         {
             _sys = ActorSystem.Create("TestActorSystem", Config);
-            _testKit = new TestKit.Xunit2.TestKit(_sys, _helper);
+            _testKit = new TestKit.Xunit.TestKit(_sys, _helper);
             _loggingAdapter = _sys.Log;
 
-            return Task.CompletedTask;
+            return default;
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             _testKit.Shutdown();
             await _sys.Terminate();

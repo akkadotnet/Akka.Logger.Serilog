@@ -10,11 +10,10 @@ using Akka.Event;
 using FluentAssertions;
 using Serilog;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Logger.Serilog.Tests
 {
-    public class Bugfix4579Spec : TestKit.Xunit2.TestKit
+    public class Bugfix4579Spec : TestKit.Xunit.TestKit
     {
         public Bugfix4579Spec(ITestOutputHelper output) : base(GetConfig(), output: output)
         {

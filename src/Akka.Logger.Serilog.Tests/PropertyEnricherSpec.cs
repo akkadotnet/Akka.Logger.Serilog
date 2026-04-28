@@ -12,11 +12,10 @@ using Serilog;
 using Serilog.Core.Enrichers;
 using Serilog.Events;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Logger.Serilog.Tests;
 
-public class PropertyEnricherSpec : TestKit.Xunit2.TestKit
+public class PropertyEnricherSpec : TestKit.Xunit.TestKit
 {
     public static readonly Config Config = $@"
 akka.loglevel = DEBUG
