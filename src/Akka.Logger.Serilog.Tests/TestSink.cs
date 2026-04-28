@@ -2,7 +2,6 @@
 using Serilog.Core;
 using Serilog.Events;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Logger.Serilog.Tests
 {
