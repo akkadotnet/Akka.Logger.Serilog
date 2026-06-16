@@ -77,7 +77,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAkka("MyActorSystem", configurationBuilder =>
 {
-    configurationBuilder.WithLogging(loggerConfigBuilder =>
+    configurationBuilder.ConfigureLoggers(loggerConfigBuilder =>
     {
         loggerConfigBuilder.AddSerilogLogging();
     });

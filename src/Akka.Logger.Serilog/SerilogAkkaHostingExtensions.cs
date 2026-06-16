@@ -17,7 +17,7 @@ public static class SerilogAkkaHostingExtensions
     /// Adds Serilog one of the default loggers for the Akka.NET actor system and enables
     /// Serilog-style semantic logging formatting for all log messages.
     /// </summary>
-    /// <param name="configBuilder">The Akka.Hosting <see cref="LoggerConfigBuilder"/> - call <see cref="AkkaConfigurationBuilder.WithLogging"/></param>
+    /// <param name="configBuilder">The Akka.Hosting <see cref="LoggerConfigBuilder"/> - call <see cref="AkkaConfigurationBuilder.ConfigureLoggers"/></param>
     /// <param name="enableSerilogFormatter">Defaults to <c>true</c> - enables the <see cref="SerilogLogMessageFormatter"/> to be used by default.</param>
     /// <returns></returns>
     public static LoggerConfigBuilder AddSerilogLogging(this LoggerConfigBuilder configBuilder, bool enableSerilogFormatter = true)

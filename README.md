@@ -44,7 +44,7 @@ builder.Host.UseSerilog((context, config) =>
 // Register Akka.NET with Serilog logging
 builder.Services.AddAkka("MySystem", configurationBuilder =>
 {
-    configurationBuilder.WithLogging(loggerConfigBuilder =>
+    configurationBuilder.ConfigureLoggers(loggerConfigBuilder =>
     {
         loggerConfigBuilder.AddSerilogLogging();
     });
